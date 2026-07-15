@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Volleyball Tactical Sequential Chart System (Web版)</title>
+<style>
+:root{
+  --bg-dark:#0f172a; --panel-bg:#1e293b; --text-light:#f1f5f9;
+  --accent-blue:#3b82f6; --accent-green:#10b981; --accent-red:#ef4444; --accent-purple:#8b5cf6;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;width:100%;height:100%;background:#0f172a;color:var(--text-light);font-family:"Hiragino Sans","Meiryo",sans-serif;overflow:hidden;}
+#app{width:100vw;height:100vh;position:relative;}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;background:var(--bg-dark);}
+.screen.active{display:flex;}
+button{cursor:pointer;font-family:inherit;border:none;border-radius:4px;}
+button:focus{outline:none;}
+input[type=text]{font-family:inherit;}
+
+/* ---------- Title ---------- */
+#screen-title{align-items:center;justify-content:center;}
+.title-menu{display:flex;flex-direction:column;align-items:center;gap:60px;}
+.title-heading{font-size:36px;font-weight:bold;text-align:center;line-height:1.4;}
+.title-btns{display:flex;flex-direction:column;gap:15px;}
+.big-menu-btn{width:420px;height:90px;font-size:24px;font-weight:bold;color:var(--text-light);border-radius:6px;}
+#screen-title-records{position:absolute;inset:0;display:none;flex-direction:column;padding:30px 40px;width:100%;height:100%;background:var(--bg-dark);}
+#screen-title-records.active{display:flex;}
+.record-header{font-size:22px;font-weight:bold;text-align:center;margin-bottom:15px;}
+#record-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;}
+.record-row{display:flex;align-items:center;gap:8px;height:48px;}
+.record-row .rec-main{flex:1;height:48px;background:var(--panel-bg);color:var(--text-light);text-align:left;padding:0 14px;font-size:16px;border-radius:4px;}
+.record-row .rec-del{width:90px;height:48px;background:#b42828;color:var(--text-light);font-weight:bold;border-radius:4px;}
+.record-back-btn{width:100%;height:50px;font-size:16px;font-weight:bold;background:#475569;color:var(--text-light);margin-top:10px;border-radius:4px;}
+.record-empty{color:gray;font-size:15px;}
+
+/* ---------- Setup screens ---------- */
+.setup-screen{padding:30px;gap:20px;}
+.setup-north{display:flex;flex-direction:column;gap:10px;}
+.setup-title{font-size:26px;font-weight:bold;text-align:center;}
+.setup-teamname-row{display:flex;justify-content:center;align-items:center;gap:10px;}
+.setup-teamname-row label{font-size:16px;font-weight:bold;}
+.setup-teamname-row input{font-size:16px;font-weight:bold;background:var(--bg-dark);color:var(--text-light);border:1px solid #888;padding:4px 8px;width:180px;}
+.setup-center{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:30px;overflow:hidden;margin-top:10px;}
+.setup-panel{border:1px solid gray;border-radius:4px;position:relative;padding-top:22px;display:flex;flex-direction:column;overflow:hidden;}
+.setup-panel-title{position:absolute;top:-11px;left:12px;background:var(--bg-dark);padding:0 6px;font-size:16px;font-weight:bold;}
+.setup-list-scroll{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:5px;}
+.roster-row{display:flex;gap:10px;align-items:center;}
+.roster-row .num-btn{width:60px;height:34px;font-size:14px;font-weight:bold;background:var(--panel-bg);color:var(--text-light);border-radius:3px;flex-shrink:0;}
+.roster-row .num-btn.selected{background:var(--accent-blue);}
+.roster-row input{flex:1;font-size:16px;background:var(--bg-dark);color:var(--text-light);border:1px solid gray;padding:2px 5px;}
+.roster-row input.selected{border:2px solid var(--accent-blue);}
+.court-role-area{flex:1;display:flex;flex-direction:column;gap:15px;padding:15px;}
+.court-role-starters{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:15px;flex:0.7;}
+.court-role-liberos{display:grid;grid-template-columns:1fr 1fr;gap:15px;flex:0.3;}
+.role-btn{background:var(--panel-bg);color:var(--text-light);border:1px solid #ccc;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:14px;line-height:1.4;padding:4px;}
+.role-btn .rb-label{font-size:20px;font-weight:bold;}
+.role-btn .rb-value{font-size:13px;color:#cbd5e1;}
+.role-btn.assigned{background:#1e3a8a;}
+.role-btn.assigned .rb-value{font-size:16px;color:#f97316;font-weight:bold;}
+.opp-num-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:15px;overflow-y:auto;}
+.opp-num-btn{height:44px;font-size:16px;font-weight:bold;background:var(--panel-bg);color:var(--text-light);border-radius:3px;}
+.opp-num-btn.selected{background:var(--accent-red);}
+.role-btn.assigned-opp{background:#7f1d1d;}
+.role-btn.assigned-opp .rb-value{font-size:18px;color:#ef4444;font-weight:bold;}
+.setup-next-btn{width:100%;height:60px;font-size:22px;font-weight:bold;color:var(--text-light);border-radius:4px;}
+
+/* ---------- Game screen ---------- */
+#screen-game{background:#000;}
+#game-header-wrapper{display:flex;flex-direction:column;flex-shrink:0;}
+#game-header{display:grid;grid-template-columns:1fr 1fr;height:210px;}
+.score-section{background:#000;border:1px solid #323232;display:flex;flex-direction:column;overflow:hidden;}
+.score-topinfo{display:flex;align-items:center;gap:8px;padding:4px 8px;flex-wrap:wrap;}
+.score-topinfo.right{justify-content:flex-end;}
+.score-name{color:#fff;font-size:15px;}
+.score-sub{color:#b4dcff;font-weight:bold;font-size:12px;}
+.to-btn{background:#444;color:#fff;font-size:12px;padding:3px 8px;border-radius:3px;}
+.score-center{flex:1;display:flex;align-items:center;justify-content:center;position:relative;}
+.score-num{font-family:"Consolas",monospace;font-weight:bold;font-size:80px;color:#fff;}
+.score-minus,.score-plus{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;font-size:22px;font-weight:bold;color:#fff;border-radius:3px;}
+.score-minus{left:14px;background:#502020;}
+.score-plus{right:14px;background:#1e461e;}
+.serve-dot-wrap{position:absolute;bottom:6px;left:0;right:0;display:flex;justify-content:center;}
+.serve-dot{width:22px;height:22px;border-radius:50%;}
+.serve-dot.active{background:#1e90ff;}
+.score-history{display:flex;flex-direction:column;background:#141414;height:44px;justify-content:center;padding:0 8px;}
+.score-history span{color:gray;font-size:11px;}
+#game-logbar{background:#1e1e1e;height:35px;display:flex;align-items:center;flex-shrink:0;}
+#game-logbar .log-text{flex:1;text-align:center;color:orange;font-weight:bold;font-size:14px;}
+#game-logbar .log-btns{display:flex;gap:5px;padding-right:5px;}
+#game-logbar button{font-size:12px;font-weight:bold;color:#fff;padding:4px 8px;border-radius:3px;}
+#court-area{flex:1;position:relative;background:#282828;overflow:hidden;}
+#court-canvas{position:absolute;left:0;top:0;}
+#btn-left-win,#btn-right-lose{position:absolute;font-size:17px;font-weight:bold;color:#fff;border-radius:4px;}
+#btn-left-win{background:#00a000;}
+#btn-right-lose{background:#c81e1e;}
+#btn-left-win:disabled,#btn-right-lose:disabled{opacity:0.4;cursor:default;}
+#game-footer{background:#141414;height:110px;display:grid;grid-template-columns:0.4fr 0.2fr 0.4fr;flex-shrink:0;}
+.bench-scroll{overflow-x:auto;overflow-y:hidden;background:#191919;display:flex;align-items:center;gap:10px;padding:15px;white-space:nowrap;}
+.bench-btn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:85px;height:60px;color:#fff;font-size:13px;line-height:1.3;flex-shrink:0;border-radius:3px;}
+.footer-menu{display:flex;align-items:center;justify-content:center;gap:8px;}
+.footer-menu button{width:120px;height:55px;font-size:14px;font-weight:bold;color:#fff;border-radius:3px;}
+#btn-change-court{background:#3366cc;}
+#btn-open-stats{width:110px !important;background:#8b5cf6;font-size:15px !important;}
+
+/* ---------- Modal dialogs ---------- */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:1000;}
+.modal-box{background:#232833;border:3px solid #ccc;border-radius:4px;width:380px;padding:10px;display:flex;flex-direction:column;}
+.modal-title{color:#fff;font-weight:bold;font-size:16px;text-align:center;padding:10px 0 5px;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:5px 10px;}
+.modal-grid button{padding:14px 4px;font-size:15px;font-weight:bold;color:#fff;background:#323c50;border-radius:3px;}
+.modal-bottom{display:flex;flex-direction:column;gap:5px;padding:5px 10px 10px;}
+.modal-bottom .score-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.modal-bottom .score-row button{height:50px;font-size:15px;font-weight:bold;color:#fff;border-radius:3px;}
+.modal-bottom .close-btn{height:40px;background:#333;color:#fff;font-weight:bold;border-radius:3px;}
+.modal-bottom .err-btn{height:45px;background:#a01414;color:#fff;font-weight:bold;border-radius:3px;}
+.modal-bottom .back-btn{height:40px;background:#333;color:#fff;font-weight:bold;border-radius:3px;}
+.chooser-box{background:#232833;border:3px solid #ccc;border-radius:4px;width:380px;max-height:80vh;padding:15px;display:flex;flex-direction:column;gap:10px;}
+.chooser-title{color:#fff;font-weight:bold;font-size:15px;text-align:center;}
+.chooser-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;overflow-y:auto;}
+.chooser-grid button{height:75px;font-size:14px;font-weight:bold;color:#fff;background:#323c50;border-radius:3px;line-height:1.4;}
+.chooser-grid button .cg-pos{font-size:20px;font-weight:bold;display:block;}
+.chooser-cancel{height:40px;background:#333;color:#fff;font-weight:bold;border-radius:3px;}
+
+/* ---------- Stats screen ---------- */
+#screen-stats,#screen-record-stats{padding:20px;gap:15px;background:#0f172a;}
+.stats-title{font-size:22px;font-weight:bold;text-align:center;}
+.stats-table-wrap{flex:1;overflow:auto;border:1px solid #334155;}
+table.stats-table{border-collapse:collapse;font-size:13px;white-space:nowrap;}
+table.stats-table th,table.stats-table td{border:1px solid #334155;padding:6px 8px;text-align:center;}
+table.stats-table th{background:#1e293b;position:sticky;top:0;}
+table.stats-table tr:nth-child(even){background:#16202f;}
+.stats-bottom,.chart-bottom{display:flex;justify-content:center;gap:20px;padding-top:10px;flex-wrap:wrap;}
+.stats-bottom button,.chart-bottom button{height:50px;padding:0 20px;font-size:15px;font-weight:bold;color:#fff;border-radius:4px;}
+
+/* ---------- Chart screen ---------- */
+#screen-chart,#screen-record-chart{padding:20px;gap:15px;background:#141e2d;}
+.chart-title{font-size:24px;font-weight:bold;text-align:center;color:#fff;}
+.chart-filters{display:flex;justify-content:center;align-items:center;gap:15px;flex-wrap:wrap;}
+.chart-filters label{font-weight:bold;font-size:13px;}
+.chart-filters select,.chart-filters button{font-size:13px;padding:4px 8px;}
+.chart-filters button{font-weight:bold;color:#fff;background:#dc2626;border-radius:3px;padding:8px 12px;}
+#chart-canvas-wrap,#record-chart-canvas-wrap{flex:1;position:relative;overflow:hidden;}
+#chart-canvas,#record-chart-canvas{position:absolute;left:0;top:0;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ============ タイトル画面 ============ -->
+<div id="screen-title" class="screen active">
+  <div class="title-menu">
+    <div class="title-heading">🏐 Volleyball Tactical<br>Sequential Chart System</div>
+    <div class="title-btns">
+      <button class="big-menu-btn" style="background:var(--accent-green)" id="btn-goto-selfsetup">📋 試合計測</button>
+      <button class="big-menu-btn" style="background:var(--accent-purple)" id="btn-goto-records">📊 試合記録</button>
+    </div>
+  </div>
+</div>
+<div id="screen-title-records">
+  <div class="record-header">試合記録一覧（クリックで計測データ・チャートデータを表示）</div>
+  <div id="record-list"></div>
+  <button class="record-back-btn" id="btn-records-back">◀ タイトルメニューに戻る</button>
+</div>
+
+<!-- ============ 自チーム設定画面 ============ -->
+<div id="screen-self-setup" class="screen setup-screen">
+  <div class="setup-north">
+    <div class="setup-title">【自チーム】 選手エントリー ＆ 初期ポジション配置</div>
+    <div class="setup-teamname-row">
+      <label>自チーム名入力:</label>
+      <input type="text" id="self-teamname-field" value="自チーム">
+    </div>
+  </div>
+  <div class="setup-center">
+    <div class="setup-panel">
+      <div class="setup-panel-title">選手名・背番号登録 (最大14名)</div>
+      <div class="setup-list-scroll" id="self-roster-list"></div>
+    </div>
+    <div class="setup-panel">
+      <div class="setup-panel-title">コートポジション配置 (選手を選択してから位置をタップ)</div>
+      <div class="court-role-area">
+        <div class="court-role-starters" id="self-role-starters"></div>
+        <div class="court-role-liberos" id="self-role-liberos"></div>
+      </div>
+    </div>
+  </div>
+  <button class="setup-next-btn" style="background:var(--accent-green)" id="btn-self-next">相手チームの登録へ進む ➔</button>
+</div>
+
+<!-- ============ 相手チーム設定画面 ============ -->
+<div id="screen-opp-setup" class="screen setup-screen">
+  <div class="setup-north">
+    <div class="setup-title">【相手チーム】 背番号登録 ＆ 初期ポジション配置</div>
+    <div class="setup-teamname-row">
+      <label>対戦相手の学校名（チーム名）入力:</label>
+      <input type="text" id="opp-teamname-field" value="相手チーム">
+    </div>
+  </div>
+  <div class="setup-center">
+    <div class="setup-panel" style="padding-top:0;">
+      <div class="opp-num-grid" id="opp-num-grid"></div>
+    </div>
+    <div class="setup-panel">
+      <div class="setup-panel-title">相手ポジション配置 (番号を選んでから位置をタップ)</div>
+      <div class="court-role-area">
+        <div class="court-role-starters" id="opp-role-starters"></div>
+        <div class="court-role-liberos" id="opp-role-liberos"></div>
+      </div>
+    </div>
+  </div>
+  <button class="setup-next-btn" style="background:var(--accent-green)" id="btn-opp-start">📊 試合アナリティクスを開始する</button>
+</div>
+
+<!-- ============ 試合画面 ============ -->
+<div id="screen-game" class="screen">
+  <div id="game-header-wrapper">
+    <div id="game-header">
+      <div class="score-section" id="score-section-left"></div>
+      <div class="score-section" id="score-section-right"></div>
+    </div>
+    <div id="game-logbar">
+      <div class="log-text" id="rally-log-text">現在のラリー: 待機中</div>
+      <div class="log-btns">
+        <button id="btn-undo" style="background:#646e78;" disabled>1つ前に戻す</button>
+        <button id="btn-reset-rally" style="background:#b42828;">ラリー取消</button>
+        <button id="btn-undo-point" style="background:#8c3ca0;">確定ラリー取消</button>
+      </div>
+    </div>
+  </div>
+  <div id="court-area">
+    <canvas id="court-canvas"></canvas>
+    <button id="btn-left-win" disabled>得点</button>
+    <button id="btn-right-lose" disabled>失点</button>
+  </div>
+  <div id="game-footer">
+    <div class="bench-scroll" id="bench-left" style="background:#191919;"></div>
+    <div class="footer-menu">
+      <button id="btn-change-court">チェンジコート</button>
+      <button id="btn-open-stats">データ集計</button>
+    </div>
+    <div class="bench-scroll" id="bench-right" style="background:#191919;"></div>
+  </div>
+</div>
+
+<!-- ============ データ集計画面 (試合中/記録閲覧 共通テンプレート) ============ -->
+<div id="screen-stats" class="screen">
+  <div class="stats-title" id="stats-title">リアルタイム個人データ集計表 (自チーム)</div>
+  <div class="stats-table-wrap"><table class="stats-table" id="stats-table"></table></div>
+  <div class="stats-bottom">
+    <button id="stats-btn-toggle" style="background:#dc2626;">相手チームのデータに切り替え</button>
+    <button id="stats-btn-chart" style="background:#10b981;">チャート画面に切り替え</button>
+    <button id="stats-btn-back" style="background:#475569;">元の入力画面に戻る</button>
+  </div>
+</div>
+<div id="screen-record-stats" class="screen">
+  <div class="stats-title" id="record-stats-title">リアルタイム個人データ集計表 (自チーム)</div>
+  <div class="stats-table-wrap"><table class="stats-table" id="record-stats-table"></table></div>
+  <div class="stats-bottom">
+    <button id="record-stats-btn-toggle" style="background:#dc2626;">相手チームのデータに切り替え</button>
+    <button id="record-stats-btn-chart" style="background:#10b981;">チャート画面に切り替え</button>
+    <button id="record-stats-btn-back" style="background:#475569;">タイトル画面に戻る</button>
+  </div>
+</div>
+
+<!-- ============ チャート画面 ============ -->
+<div id="screen-chart" class="screen">
+  <div class="chart-title" id="chart-title">戦略プレー軌跡チャート (表示中: 自チーム)</div>
+  <div class="chart-filters">
+    <button id="chart-btn-toggle-team">相手チームのチャートに切り替え</button>
+    <label>ラリー選択:</label><select id="chart-select-rally"></select>
+    <label>選手:</label><select id="chart-select-player"></select>
+    <label>プレー種類:</label><select id="chart-select-playtype"></select>
+  </div>
+  <div id="chart-canvas-wrap"><canvas id="chart-canvas"></canvas></div>
+  <div class="chart-bottom">
+    <button id="chart-btn-back-stats" style="background:#8b5cf6;">データ集計画面に戻る</button>
+    <button id="chart-btn-back-game" style="background:#475569;">元の入力画面に戻る</button>
+  </div>
+</div>
+<div id="screen-record-chart" class="screen">
+  <div class="chart-title" id="record-chart-title">戦略プレー軌跡チャート (表示中: 自チーム)</div>
+  <div class="chart-filters">
+    <button id="record-chart-btn-toggle-team">相手チームのチャートに切り替え</button>
+    <label>ラリー選択:</label><select id="record-chart-select-rally"></select>
+    <label>選手:</label><select id="record-chart-select-player"></select>
+    <label>プレー種類:</label><select id="record-chart-select-playtype"></select>
+  </div>
+  <div id="record-chart-canvas-wrap"><canvas id="record-chart-canvas"></canvas></div>
+  <div class="chart-bottom">
+    <button id="record-chart-btn-back-stats" style="background:#8b5cf6;">データ集計画面に戻る</button>
+    <button id="record-chart-btn-back-game" style="background:#475569;">タイトル画面に戻る</button>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+</div>
+<script>
+"use strict";
+/* =========================================================
+   Volleyball Tactical Sequential Chart System - Web版
+   Java(Swing)版 Main.java を機能・UIそのままにJavaScriptへ移植
+   ========================================================= */
+
+/* ---------- 画面遷移 ---------- */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---------- 選手成績 PlayerStats 相当 ---------- */
+function newPlayerStats(name, isRegistered){
+  return {
+    name: name, isRegistered: !!isRegistered, position:"", teamName:"",
+    spikeAttempts:0, spikeKills:0, spikeErrors:0,
+    feintAttempts:0, feintKills:0, feintErrors:0,
+    blockKills:0, blockErrors:0,
+    receptionTotal:0, receptionA:0, receptionB:0, receptionC:0, receptionError:0,
+    digErrors:0,
+    serveAttempts:0, serveKills:0, serveErrors:0,
+    otherKills:0, otherErrors:0
+  };
+}
+
+/* ---------- 試合記録の永続化(localStorageでファイル保存の代わり) ---------- */
+const RECORDS_KEY = "volleyball_tactical_app_records";
+function loadRecordsFromDisk(){
+  try{
+    const raw = localStorage.getItem(RECORDS_KEY);
+    if(!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : [];
+  }catch(e){ console.error(e); return []; }
+}
+function saveRecordsToDisk(){
+  try{ localStorage.setItem(RECORDS_KEY, JSON.stringify(App.savedRecords)); }
+  catch(e){ console.error(e); }
+}
+
+/* ---------- アプリ全体の状態(Mainクラス相当) ---------- */
+const App = {
+  savedRecords: [],
+  game: null,          // 現在進行中の GamePanel 相当オブジェクト
+  liveStats: null,     // 試合中のStatsPanel状態
+  liveChart: null,     // 試合中のChartPanel状態
+  recordStats: null,   // 記録閲覧用StatsPanel状態
+  recordChart: null,   // 記録閲覧用ChartPanel状態
+  currentRecord: null,
+
+  init(){
+    this.savedRecords = loadRecordsFromDisk();
+    showScreen('screen-title');
+  },
+  showTitleScreen(){
+    document.getElementById('modal-root').innerHTML = "";
+    document.getElementById('screen-title-records').classList.remove('active');
+    showScreen('screen-title');
+  },
+  showSelfSetupScreen(){
+    document.getElementById('modal-root').innerHTML = "";
+    SelfSetup.reset();
+    showScreen('screen-self-setup');
+  },
+  showOpponentSetup(teamName, starters, liberos, all){
+    document.getElementById('modal-root').innerHTML = "";
+    OppSetup.init(teamName, starters, liberos, all);
+    showScreen('screen-opp-setup');
+  },
+  finishGameAndReturnToTitle(){
+    if(this.game){
+      const g = this.game;
+      const rec = {
+        dateTime: formatDateTime(new Date()),
+        selfTeamName: g.selfTeamName,
+        oppTeamName: g.oppTeamName,
+        finalSetsA: g.setsA,
+        finalSetsB: g.setsB,
+        selfStatsMap: g.playerStatsMap,
+        oppStatsMap: g.opponentStatsMap,
+        arrowList: g.arrowList,
+        rallyPackList: g.rallyPackList
+      };
+      this.savedRecords.push(rec);
+      saveRecordsToDisk();
+    }
+    this.showTitleScreen();
+  },
+  deleteRecord(rec){
+    const idx = this.savedRecords.indexOf(rec);
+    if(idx>=0) this.savedRecords.splice(idx,1);
+    saveRecordsToDisk();
+    TitleRecords.refresh();
+  },
+  startGame(teamName, s, l, all, oppTeamName, oppS, oppL, oppAll){
+    const g = createGamePanel(teamName, s, l, all, oppTeamName, oppS, oppL, oppAll);
+    this.game = g;
+
+    // 自チーム:登録選手全員をMapに反映
+    if(all){
+      all.forEach(pName=>{
+        if(pName && pName.indexOf("未登録")===-1){
+          let st = g.playerStatsMap[pName];
+          if(!st){ st = newPlayerStats(pName, true); g.playerStatsMap[pName]=st; }
+          st.teamName = teamName;
+        }
+      });
+    }
+    const selfLabels = ["S4","S3","S2","S5","S6","S1"];
+    for(let i=0;i<6;i++){
+      if(s[i]){
+        const st = g.playerStatsMap[s[i]];
+        if(st) st.position = selfLabels[i];
+      }
+    }
+    const oppLabels = ["S4","S3","S2","S5","S6","S1"];
+    for(let i=0;i<6;i++){
+      if(oppS[i]){
+        let st = g.opponentStatsMap[oppS[i]];
+        if(!st){ st = newPlayerStats(oppS[i], true); g.opponentStatsMap[oppS[i]] = st; }
+        st.position = oppLabels[i];
+        st.teamName = oppTeamName;
+      }
+    }
+
+    showScreen('screen-game');
+    GameScreen.mount(g);
+  },
+  showStatsPage(){
+    if(!this.liveStats){ this.liveStats = createStatsState(this.game.playerStatsMap, this.game.opponentStatsMap); }
+    StatsScreen.render('screen-stats', this.liveStats, false);
+    showScreen('screen-stats');
+  },
+  showChartPage(){
+    if(!this.liveChart){ this.liveChart = createChartState(this.game.playerStatsMap, this.game.opponentStatsMap, this.game.arrowList, this.game.rallyPackList); }
+    else { this.liveChart.selfPlayerMap = this.game.playerStatsMap; this.liveChart.oppPlayerMap = this.game.opponentStatsMap; }
+    ChartScreen.render('screen-chart', this.liveChart, false);
+    showScreen('screen-chart');
+  },
+  backToGame(){ showScreen('screen-game'); },
+  showRecordDetail(rec){
+    this.currentRecord = rec;
+    this.recordStats = createStatsState(rec.selfStatsMap, rec.oppStatsMap);
+    this.recordChart = createChartState(rec.selfStatsMap, rec.oppStatsMap, rec.arrowList, rec.rallyPackList);
+    StatsScreen.render('screen-record-stats', this.recordStats, true);
+    showScreen('screen-record-stats');
+  },
+  showRecordStatsPage(){ StatsScreen.render('screen-record-stats', this.recordStats, true); showScreen('screen-record-stats'); },
+  showRecordChartPage(){ ChartScreen.render('screen-record-chart', this.recordChart, true); showScreen('screen-record-chart'); }
+};
+
+function formatDateTime(d){
+  const p2 = n => String(n).padStart(2,'0');
+  return d.getFullYear()+"/"+p2(d.getMonth()+1)+"/"+p2(d.getDate())+" "+p2(d.getHours())+":"+p2(d.getMinutes());
+}
+function indexOfArr(arr, v){
+  if(v==null || !arr) return -1;
+  for(let i=0;i<arr.length;i++) if(arr[i]===v) return i;
+  return -1;
+}
+function escapeHtml(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* ---------- タイトル画面：記録一覧 ---------- */
+const TitleRecords = {
+  refresh(){
+    const list = document.getElementById('record-list');
+    list.innerHTML = "";
+    const records = App.savedRecords;
+    if(!records || records.length===0){
+      const empty = document.createElement('div');
+      empty.className = 'record-empty';
+      empty.textContent = "まだ保存された試合記録がありません。";
+      list.appendChild(empty);
+      return;
+    }
+    for(let i=records.length-1;i>=0;i--){
+      const rec = records[i];
+      const row = document.createElement('div');
+      row.className = 'record-row';
+      const mainBtn = document.createElement('button');
+      mainBtn.className = 'rec-main';
+      mainBtn.textContent = `${rec.dateTime}　｜　${rec.selfTeamName} ${rec.finalSetsA} - ${rec.finalSetsB} ${rec.oppTeamName}`;
+      mainBtn.addEventListener('click', ()=> App.showRecordDetail(rec));
+      const delBtn = document.createElement('button');
+      delBtn.className = 'rec-del';
+      delBtn.textContent = '🗑 削除';
+      delBtn.addEventListener('click', ()=>{
+        if(confirm(`この試合記録を削除しますか？\n${rec.dateTime}　${rec.selfTeamName} vs ${rec.oppTeamName}`)){
+          App.deleteRecord(rec);
+        }
+      });
+      row.appendChild(mainBtn); row.appendChild(delBtn);
+      list.appendChild(row);
+    }
+  }
+};
+
+document.getElementById('btn-goto-selfsetup').addEventListener('click', ()=> App.showSelfSetupScreen());
+document.getElementById('btn-goto-records').addEventListener('click', ()=>{
+  TitleRecords.refresh();
+  document.getElementById('screen-title').classList.remove('active');
+  document.getElementById('screen-title-records').classList.add('active');
+});
+document.getElementById('btn-records-back').addEventListener('click', ()=>{
+  document.getElementById('screen-title-records').classList.remove('active');
+  document.getElementById('screen-title').classList.add('active');
+});
+</script>
+<script>
+"use strict";
+/* =========================================================
+   自チーム設定画面 (SelfSetupPanel 相当)
+   ========================================================= */
+const SelfSetup = {
+  nameValues: new Array(14).fill(""),
+  selectedPlayerIndex: 0,
+  assignedRoles: new Array(8).fill(null), // index:0=S4,1=S3,2=S2,3=S5,4=S6,5=S1,6=L1,7=L2
+  roleLabels: ["S4","S3","S2","S5","S6","S1","L1","L2"],
+
+  reset(){
+    this.nameValues = new Array(14).fill("");
+    this.assignedRoles = new Array(8).fill(null);
+    this.selectedPlayerIndex = 0;
+    document.getElementById('self-teamname-field').value = "自チーム";
+    this.buildRosterList();
+    this.buildRoleButtons();
+    this.selectPlayerRow(0);
+  },
+
+  buildRosterList(){
+    const wrap = document.getElementById('self-roster-list');
+    wrap.innerHTML = "";
+    for(let i=0;i<14;i++){
+      const row = document.createElement('div'); row.className='roster-row';
+      const numBtn = document.createElement('button'); numBtn.className='num-btn'; numBtn.textContent=(i+1)+"番";
+      numBtn.addEventListener('click', ()=> this.selectPlayerRow(i));
+      const nameInput = document.createElement('input'); nameInput.type='text';
+      nameInput.addEventListener('focus', ()=> this.selectPlayerRow(i));
+      nameInput.addEventListener('input', ()=>{ this.nameValues[i] = nameInput.value; });
+      row.appendChild(numBtn); row.appendChild(nameInput);
+      wrap.appendChild(row);
+    }
+  },
+
+  selectPlayerRow(index){
+    this.selectedPlayerIndex = index;
+    const wrap = document.getElementById('self-roster-list');
+    const rows = wrap.querySelectorAll('.roster-row');
+    rows.forEach((row,i)=>{
+      const numBtn = row.querySelector('.num-btn');
+      const input = row.querySelector('input');
+      if(i===index){ numBtn.classList.add('selected'); input.classList.add('selected'); }
+      else{ numBtn.classList.remove('selected'); input.classList.remove('selected'); }
+    });
+  },
+
+  buildRoleButtons(){
+    const starters = document.getElementById('self-role-starters');
+    const liberos = document.getElementById('self-role-liberos');
+    starters.innerHTML = ""; liberos.innerHTML = "";
+    for(let i=0;i<8;i++){
+      const btn = document.createElement('button');
+      btn.className='role-btn';
+      btn.innerHTML = `<span class="rb-label">${this.roleLabels[i]}</span><span class="rb-value">未配置</span>`;
+      btn.addEventListener('click', ()=> this.onRoleClick(i, btn));
+      (i<6 ? starters : liberos).appendChild(btn);
+    }
+  },
+
+  onRoleClick(roleIdx, btn){
+    const idx = this.selectedPlayerIndex;
+    const inputName = this.nameValues[idx] ? this.nameValues[idx].trim() : "";
+    const displayName = inputName === "" ? "未登録" : inputName;
+    const fullEntry = (idx+1)+":"+displayName;
+
+    // 既に同じ選手が別の枠に配置されていれば解除
+    const allBtns = document.querySelectorAll('#self-role-starters .role-btn, #self-role-liberos .role-btn');
+    for(let i=0;i<8;i++){
+      if(this.assignedRoles[i]===fullEntry){
+        this.assignedRoles[i]=null;
+        allBtns[i].classList.remove('assigned');
+        allBtns[i].innerHTML = `<span class="rb-label">${this.roleLabels[i]}</span><span class="rb-value">未配置</span>`;
+      }
+    }
+    this.assignedRoles[roleIdx] = fullEntry;
+    btn.classList.add('assigned');
+    btn.innerHTML = `<span class="rb-label">${this.roleLabels[roleIdx]}</span><span class="rb-value">No.${escapeHtml(fullEntry)}</span>`;
+  },
+
+  proceed(){
+    for(let i=0;i<6;i++){
+      if(this.assignedRoles[i]==null){
+        alert("スターティングメンバー(S1〜S6)が配置されていません。\n全員配置してください。");
+        return;
+      }
+    }
+    const allPlayerEntries = new Array(14);
+    for(let i=0;i<14;i++){
+      const name = this.nameValues[i] ? this.nameValues[i].trim() : "";
+      allPlayerEntries[i] = (i+1)+":"+(name===""?"未登録":name);
+    }
+    // 配置済みの枠を最新の名前で同期
+    for(let i=0;i<8;i++){
+      if(this.assignedRoles[i]!=null){
+        const numberPart = this.assignedRoles[i].split(":")[0];
+        const num = parseInt(numberPart,10);
+        if(!isNaN(num) && num>=1 && num<=14){
+          this.assignedRoles[i] = allPlayerEntries[num-1];
+        }
+      }
+    }
+    const starterRoles = this.assignedRoles.slice(0,6);
+    const liberoRoles = this.assignedRoles.slice(6,8);
+    let finalTeamName = document.getElementById('self-teamname-field').value.trim();
+    if(finalTeamName==="") finalTeamName = "自チーム";
+    App.showOpponentSetup(finalTeamName, starterRoles, liberoRoles, allPlayerEntries);
+  }
+};
+document.getElementById('btn-self-next').addEventListener('click', ()=> SelfSetup.proceed());
+
+/* =========================================================
+   相手チーム設定画面 (OpponentSetupPanel 相当)
+   ========================================================= */
+const OppSetup = {
+  selfTeamName:"", selfStarters:null, selfLiberos:null, selfAll:null,
+  selectedOpponentNumber: "1",
+  assignedOpponentRoles: new Array(8).fill(null),
+  roleLabels: ["S4","S3","S2","S5","S6","S1","L1","L2"],
+
+  init(teamName, s, l, all){
+    this.selfTeamName = teamName; this.selfStarters=s; this.selfLiberos=l; this.selfAll=all;
+    this.selectedOpponentNumber = "1";
+    this.assignedOpponentRoles = new Array(8).fill(null);
+    document.getElementById('opp-teamname-field').value = "相手チーム";
+    this.buildNumGrid();
+    this.buildRoleButtons();
+    this.selectNumber("1", document.querySelectorAll('.opp-num-btn')[0]);
+  },
+
+  buildNumGrid(){
+    const grid = document.getElementById('opp-num-grid');
+    grid.innerHTML = "";
+    for(let i=1;i<=14;i++){
+      const btn = document.createElement('button');
+      btn.className='opp-num-btn';
+      btn.textContent = "背番号 "+i;
+      btn.addEventListener('click', ()=> this.selectNumber(String(i), btn));
+      grid.appendChild(btn);
+    }
+  },
+
+  selectNumber(numStr, btn){
+    this.selectedOpponentNumber = numStr;
+    document.querySelectorAll('.opp-num-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+  },
+
+  buildRoleButtons(){
+    const starters = document.getElementById('opp-role-starters');
+    const liberos = document.getElementById('opp-role-liberos');
+    starters.innerHTML=""; liberos.innerHTML="";
+    for(let i=0;i<8;i++){
+      const btn = document.createElement('button');
+      btn.className='role-btn';
+      btn.innerHTML = `<span class="rb-label">${this.roleLabels[i]}</span><span class="rb-value">未配置</span>`;
+      btn.addEventListener('click', ()=> this.onRoleClick(i, btn));
+      (i<6?starters:liberos).appendChild(btn);
+    }
+  },
+
+  onRoleClick(roleIdx, btn){
+    if(this.selectedOpponentNumber==null){
+      alert("先に左側から相手の背番号を選択してください。");
+      return;
+    }
+    const entryName = this.selectedOpponentNumber+"番";
+    const allBtns = document.querySelectorAll('#opp-role-starters .role-btn, #opp-role-liberos .role-btn');
+    for(let i=0;i<8;i++){
+      if(this.assignedOpponentRoles[i]===entryName){
+        this.assignedOpponentRoles[i]=null;
+        allBtns[i].classList.remove('assigned-opp');
+        allBtns[i].innerHTML = `<span class="rb-label">${this.roleLabels[i]}</span><span class="rb-value">未配置</span>`;
+      }
+    }
+    this.assignedOpponentRoles[roleIdx]=entryName;
+    btn.classList.add('assigned-opp');
+    btn.innerHTML = `<span class="rb-label">${this.roleLabels[roleIdx]}</span><span class="rb-value">${entryName}</span>`;
+  },
+
+  startGame(){
+    for(let i=0;i<6;i++){
+      if(this.assignedOpponentRoles[i]==null){
+        alert("相手チームのスターティングメンバー(S1〜S6)が配置されていません。\n全員配置してください。");
+        return;
+      }
+    }
+    const oppStarters = this.assignedOpponentRoles.slice(0,6);
+    const oppLiberos = this.assignedOpponentRoles.slice(6,8);
+    const oppAll = [];
+    for(let i=1;i<=14;i++) oppAll.push(i+"番");
+    let finalOppTeamName = document.getElementById('opp-teamname-field').value.trim();
+    if(finalOppTeamName==="") finalOppTeamName = "相手チーム";
+    App.startGame(this.selfTeamName, this.selfStarters, this.selfLiberos, this.selfAll,
+                   finalOppTeamName, oppStarters, oppLiberos, oppAll);
+  }
+};
+document.getElementById('btn-opp-start').addEventListener('click', ()=> OppSetup.startGame());
+</script>
+<script>
+"use strict";
+/* =========================================================
+   試合画面 (GamePanel 相当) ― データ構造とファクトリ関数
+   ========================================================= */
+function newArrowData(rallyId, playerName, playType, playCode, isOpponent, startP, endP){
+  return { rallyId, playerName, playType, playCode, isOpponent,
+           startP: {x:startP.x, y:startP.y}, endP: {x:endP.x, y:endP.y} };
+}
+function newActionHistory(playerName, playType, isOpponent, stateBefore, loggedPrevPoint){
+  return { playerName, playType, isOpponent, stateBefore,
+           loggedPrevPoint: loggedPrevPoint ? {x:loggedPrevPoint.x,y:loggedPrevPoint.y} : null,
+           attachedArrow:null, attackPlayerAfter:"", attackTypeAfter:"", attackOpponentAfter:false };
+}
+function newRallyPack(id, scoreLabel){ return { id, scoreLabel, selfScored:false, arrows:[] }; }
+
+function createGamePanel(teamName, s, l, all, oppTeamName, oppS, oppL, oppAll){
+  const g = {
+    selfTeamName: teamName,
+    oppTeamName: (!oppTeamName || oppTeamName.trim()==="") ? "相手チーム" : oppTeamName,
+    scoreA:0, scoreB:0, timeoutsA:0, timeoutsB:0, setsA:0, setsB:0,
+    substitutionCountA:0, substitutionCountB:0,
+    currentS: s.slice(), currentOppS: oppS.slice(),
+    selfRoster: all, oppRoster: oppAll,
+    selfLiberoNames: l, oppLiberoNames: oppL,
+    selfPos: new Array(6).fill(null), oppPos: new Array(6).fill(null),
+    selfLockedPair:{}, oppLockedPair:{},
+    selfLiberoOnCourt:null, selfLiberoReplaced:null,
+    oppLiberoOnCourt:null, oppLiberoReplaced:null,
+    initialSelfPos:null, initialOppPos:null,
+    sidesSwapped:false,
+    serveRightIsLeft:true,
+    rallyState:1,
+    lastTapIsLeft:true,
+    tempPlayer:"",
+    lastActivePlayer:"", lastActivePlayType:"", isLastActiveOpponent:false,
+    lastAttackPlayer:"", lastAttackType:"", isLastAttackOpponent:false,
+    globalRallyCounter:1,
+    rallyPackList:[], currentRallyArrows:[],
+    isWaitingForLocation:false,
+    previousRatioPoint:null, lastCreatedArrow:null,
+    arrowList:[],
+    playerStatsMap:{}, opponentStatsMap:{},
+    rallyHistoryList:[], pointHistory:[]
+  };
+  // 初期ポジション配列を構築 (s/oppSは {S4,S3,S2,S5,S6,S1} の順)
+  if(s && s.length>=6){
+    g.selfPos[0]=s[5]; g.selfPos[1]=s[2]; g.selfPos[2]=s[1];
+    g.selfPos[3]=s[0]; g.selfPos[4]=s[3]; g.selfPos[5]=s[4];
+  }
+  if(oppS && oppS.length>=6){
+    g.oppPos[0]=oppS[5]; g.oppPos[1]=oppS[2]; g.oppPos[2]=oppS[1];
+    g.oppPos[3]=oppS[0]; g.oppPos[4]=oppS[3]; g.oppPos[5]=oppS[4];
+  }
+  g.initialSelfPos = g.selfPos.slice();
+  g.initialOppPos = g.oppPos.slice();
+
+  (all||[]).forEach(name=>{
+    if(name){
+      const isReg = name.indexOf("未登録")===-1;
+      g.playerStatsMap[name] = newPlayerStats(name, isReg);
+    }
+  });
+  (oppS||[]).forEach(name=>{ if(name) g.opponentStatsMap[name] = newPlayerStats(name, true); });
+  (oppL||[]).forEach(name=>{ if(name && !g.opponentStatsMap[name]) g.opponentStatsMap[name] = newPlayerStats(name, true); });
+
+  return g;
+}
+
+/* =========================================================
+   GameScreen ― DOM構築・描画・操作
+   ========================================================= */
+const GameScreen = {
+  dom: { left:null, right:null },
+  layout: { cx:0, cy:0, courtW:0, courtH:0, w:0, h:0 },
+  canvas: null, ctx: null,
+
+  mount(g){
+    this.canvas = document.getElementById('court-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    this.dom.left = this.buildScoreSection(document.getElementById('score-section-left'), true);
+    this.dom.right = this.buildScoreSection(document.getElementById('score-section-right'), false);
+
+    document.getElementById('btn-undo').onclick = ()=> undoLastAction();
+    document.getElementById('btn-reset-rally').onclick = ()=> cancelAndResetEntireRally();
+    document.getElementById('btn-undo-point').onclick = ()=> undoLastFinalizedPoint();
+    document.getElementById('btn-change-court').onclick = ()=> performCourtChange();
+    document.getElementById('btn-open-stats').onclick = ()=> App.showStatsPage();
+
+    const leftWinBtn = document.getElementById('btn-left-win');
+    const rightLoseBtn = document.getElementById('btn-right-lose');
+    leftWinBtn.onclick = ()=>{
+      finalizeLastPlayEndLocation(App.game.sidesSwapped ? {x:750,y:500} : {x:250,y:500});
+      addScoreToLeftTeam(true);
+    };
+    rightLoseBtn.onclick = ()=>{
+      finalizeLastPlayEndLocation(App.game.sidesSwapped ? {x:250,y:500} : {x:750,y:500});
+      addScoreToRightTeam(false);
+    };
+
+    this.canvas.addEventListener('click', e=> this.onCourtClick(e));
+    window.addEventListener('resize', ()=>{ if(App.game) this.drawCourt(); });
+
+    refreshHeaderScoreBar();
+    updateRallyLogText();
+    syncPositionsAndCourtArrays(true);
+    syncPositionsAndCourtArrays(false);
+    this.drawCourt();
+    selectInitialServeTeam();
+  },
+
+  buildScoreSection(container, isLeft){
+    container.innerHTML = "";
+    const topInfo = document.createElement('div');
+    topInfo.className = 'score-topinfo' + (isLeft ? '' : ' right');
+
+    const nameLbl = document.createElement('span'); nameLbl.className='score-name';
+    const setInd = this.buildDots(2, '#ffd400');
+    const toInd = this.buildDots(2, '#ff3b3b');
+    const subLbl = document.createElement('span'); subLbl.className='score-sub'; subLbl.textContent='交代: 0/6';
+    const toBtn = document.createElement('button'); toBtn.className='to-btn'; toBtn.textContent='TO';
+    toBtn.addEventListener('click', ()=>{
+      const g = App.game;
+      const representsSelf = isLeft ? !g.sidesSwapped : g.sidesSwapped;
+      if(representsSelf){ if(g.timeoutsA<2) g.timeoutsA++; } else { if(g.timeoutsB<2) g.timeoutsB++; }
+      refreshHeaderScoreBar();
+    });
+
+    if(isLeft){ topInfo.append(nameLbl, setInd.el, toInd.el, toBtn, subLbl); }
+    else{ topInfo.append(subLbl, toBtn, toInd.el, setInd.el, nameLbl); }
+
+    const centerPanel = document.createElement('div'); centerPanel.className='score-center';
+    const scoreLbl = document.createElement('div'); scoreLbl.className='score-num'; scoreLbl.textContent='0';
+    const minusBtn = document.createElement('button'); minusBtn.className='score-minus'; minusBtn.textContent='−';
+    const plusBtn = document.createElement('button'); plusBtn.className='score-plus'; plusBtn.textContent='＋';
+    minusBtn.addEventListener('click', ()=>{
+      const g=App.game; const representsSelf = isLeft ? !g.sidesSwapped : g.sidesSwapped;
+      if(representsSelf){ if(g.scoreA>0) g.scoreA--; } else { if(g.scoreB>0) g.scoreB--; }
+      refreshHeaderScoreBar();
+    });
+    plusBtn.addEventListener('click', ()=>{
+      const g=App.game; const representsSelf = isLeft ? !g.sidesSwapped : g.sidesSwapped;
+      if(representsSelf){ g.scoreA++; } else { g.scoreB++; }
+      refreshHeaderScoreBar();
+    });
+    const serveWrap = document.createElement('div'); serveWrap.className='serve-dot-wrap';
+    const serveDot = document.createElement('div'); serveDot.className='serve-dot';
+    serveWrap.appendChild(serveDot);
+    centerPanel.append(scoreLbl, minusBtn, plusBtn, serveWrap);
+
+    const history = document.createElement('div'); history.className='score-history';
+    for(let i=0;i<3;i++){ const sp=document.createElement('span'); sp.textContent=' --- 履歴 --- '; history.appendChild(sp); }
+
+    container.append(topInfo, centerPanel, history);
+    return { nameLbl, setInd, toInd, toBtn, subLbl, scoreLbl, serveDot };
+  },
+
+  buildDots(count, color){
+    const el = document.createElement('div'); el.style.display='flex'; el.style.gap='4px';
+    const dots = [];
+    for(let i=0;i<count;i++){
+      const d = document.createElement('div');
+      d.style.width='16px'; d.style.height='16px'; d.style.borderRadius='50%'; d.style.background='#3a3a3a';
+      el.appendChild(d); dots.push(d);
+    }
+    return { el, setUsed(n){ dots.forEach((d,i)=>{ d.style.background = (n>i)? color : '#3a3a3a'; }); } };
+  },
+
+  resizeCanvasToArea(){
+    const area = document.getElementById('court-area');
+    const w = area.clientWidth, h = area.clientHeight;
+    this.canvas.width = w; this.canvas.height = h;
+    return {w,h};
+  },
+
+  drawCourt(){
+    const g = App.game; if(!g) return;
+    const {w,h} = this.resizeCanvasToArea();
+    const ctx = this.ctx;
+    ctx.clearRect(0,0,w,h);
+
+    const courtH = Math.floor(h*0.72), courtW = courtH*2;
+    const cx = Math.floor((w-courtW)/2), cy = Math.floor(h*0.10);
+    this.layout = {cx,cy,courtW,courtH,w,h};
+
+    ctx.fillStyle = 'rgb(64,196,255)'; ctx.fillRect(cx-120, cy-40, courtW+240, courtH+80);
+    ctx.fillStyle = 'rgb(255,170,90)'; ctx.fillRect(cx, cy, courtW, courtH);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth=3;
+    ctx.strokeRect(cx, cy, courtW, courtH);
+    ctx.beginPath(); ctx.moveTo(cx+courtW/2, cy); ctx.lineTo(cx+courtW/2, cy+courtH); ctx.stroke();
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx+courtW/2-courtW/6, cy); ctx.lineTo(cx+courtW/2-courtW/6, cy+courtH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+courtW/2+courtW/6, cy); ctx.lineTo(cx+courtW/2+courtW/6, cy+courtH); ctx.stroke();
+
+    const btnW=85, btnH=75, bottomY = cy+courtH+30-btnH;
+    const leftWinBtn=document.getElementById('btn-left-win'), rightLoseBtn=document.getElementById('btn-right-lose');
+    leftWinBtn.style.left = ((cx-120-btnW)/2)+"px"; leftWinBtn.style.top = bottomY+"px";
+    leftWinBtn.style.width=btnW+"px"; leftWinBtn.style.height=btnH+"px";
+    rightLoseBtn.style.left = ((cx+courtW+120) + (w-(cx+courtW+120)-btnW)/2)+"px"; rightLoseBtn.style.top = bottomY+"px";
+    rightLoseBtn.style.width=btnW+"px"; rightLoseBtn.style.height=btnH+"px";
+
+    const miniCourtW = Math.max(90, cx-144);
+    this.drawMiniCourtDiagram(ctx, 12, cy-30, cy+courtH, miniCourtW, !g.sidesSwapped);
+    this.drawMiniCourtDiagram(ctx, cx+courtW+132, cy-30, cy+courtH, miniCourtW, g.sidesSwapped);
+  },
+
+  drawMiniCourtDiagram(ctx, boxX, boxTopY, boxBottomY, availableWidth, isSelfTeam){
+    const g = App.game;
+    const pos = isSelfTeam ? g.selfPos : g.oppPos;
+    const liberoOnCourt = isSelfTeam ? g.selfLiberoOnCourt : g.oppLiberoOnCourt;
+    const teamLabel = isSelfTeam ? g.selfTeamName : g.oppTeamName;
+
+    const diagW = Math.max(90, availableWidth);
+    const diagH = Math.min(boxBottomY-boxTopY-30, diagW*0.62);
+    const dx = boxX, dy = boxTopY+24;
+
+    ctx.font = 'bold 12px sans-serif'; ctx.fillStyle='#fff'; ctx.textBaseline='alphabetic';
+    ctx.fillText(teamLabel, boxX, boxTopY+14);
+
+    ctx.fillStyle='rgb(255,170,90)'; ctx.fillRect(dx,dy,diagW,diagH);
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.setLineDash([]);
+    ctx.strokeRect(dx,dy,diagW,diagH);
+    ctx.setLineDash([4,4]); ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(dx,dy+diagH/2); ctx.lineTo(dx+diagW,dy+diagH/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dx+diagW/3,dy); ctx.lineTo(dx+diagW/3,dy+diagH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dx+diagW*2/3,dy); ctx.lineTo(dx+diagW*2/3,dy+diagH); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const grid = [["S4","S3","S2"],["S5","S6","S1"]];
+    const labels6 = ["S1","S2","S3","S4","S5","S6"];
+    const cellW = diagW/3, cellH = diagH/2;
+    const ovalR = Math.max(2, Math.min(15, Math.min(cellW,cellH)/2-2));
+    ctx.font='bold 10px sans-serif';
+    for(let r=0;r<2;r++){
+      for(let c=0;c<3;c++){
+        const label = grid[r][c];
+        const idx = indexOfArr(labels6, label);
+        const player = pos[idx];
+        const shortName = player==null ? "-" : (player.indexOf(":")>=0 ? player.split(":")[0] : player);
+        const isLib = player!=null && player===liberoOnCourt;
+        const ccx = dx + c*cellW + cellW/2, ccy = dy + r*cellH + cellH/2;
+        ctx.fillStyle = isLib ? '#eab308' : 'rgb(30,45,65)';
+        ctx.beginPath(); ctx.arc(ccx,ccy,ovalR,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+        ctx.fillStyle='#fff'; ctx.textAlign='center';
+        ctx.fillText(label, ccx, ccy-ovalR-3);
+        ctx.fillText(shortName, ccx, ccy+4);
+        ctx.textAlign='left';
+      }
+    }
+  },
+
+  onCourtClick(evt){
+    const g = App.game; if(!g) return;
+    const rect = this.canvas.getBoundingClientRect();
+    const x = evt.clientX - rect.left, y = evt.clientY - rect.top;
+    const L = this.layout;
+    if(x>=L.cx-120 && x<=L.cx+L.courtW+120 && y>=L.cy-40 && y<=L.cy+L.courtH+40){
+      g.lastTapIsLeft = (x < L.cx+L.courtW/2) !== g.sidesSwapped;
+      const rx = (x-L.cx)/L.courtW, ry = (y-L.cy)/L.courtH;
+      const clickedRatioPoint = { x: Math.round(rx*1000), y: Math.round(ry*1000) };
+
+      if(g.previousRatioPoint!=null && g.lastCreatedArrow!=null && !g.isWaitingForLocation){
+        g.lastCreatedArrow.endP = clickedRatioPoint;
+      }
+      if(g.isWaitingForLocation){
+        finalizeLastPlayEndLocation(clickedRatioPoint);
+        g.isWaitingForLocation = false;
+      } else {
+        openFastInputDialog(clickedRatioPoint);
+      }
+    }
+  }
+};
+</script>
+<script>
+"use strict";
+/* =========================================================
+   試合ロジック本体 (GamePanelのメソッド群 相当)
+   ========================================================= */
+function finalizeLastPlayEndLocation(finalPoint){
+  const g = App.game;
+  if(g.lastCreatedArrow) g.lastCreatedArrow.endP = finalPoint;
+}
+
+function selectInitialServeTeam(){
+  const g = App.game;
+  optionDialog("最初のサーブ権はどちらですか？", [g.selfTeamName, g.oppTeamName], (choice)=>{
+    g.serveRightIsLeft = (choice===0);
+    updateServeIndicator();
+    resetRallyState();
+  });
+}
+function updateServeIndicator(){ refreshHeaderScoreBar(); }
+
+function performCourtChange(){
+  const g = App.game;
+  g.sidesSwapped = !g.sidesSwapped;
+  refreshHeaderScoreBar();
+  GameScreen.drawCourt();
+  updateRallyLogText();
+}
+
+function refreshHeaderScoreBar(){
+  const g = App.game; if(!g) return;
+  const leftIsSelf = !g.sidesSwapped;
+  const leftName = leftIsSelf ? g.selfTeamName : g.oppTeamName;
+  const rightName = leftIsSelf ? g.oppTeamName : g.selfTeamName;
+  const leftSets = leftIsSelf ? g.setsA : g.setsB;
+  const rightSets = leftIsSelf ? g.setsB : g.setsA;
+  const leftTO = leftIsSelf ? g.timeoutsA : g.timeoutsB;
+  const rightTO = leftIsSelf ? g.timeoutsB : g.timeoutsA;
+  const leftSub = leftIsSelf ? g.substitutionCountA : g.substitutionCountB;
+  const rightSub = leftIsSelf ? g.substitutionCountB : g.substitutionCountA;
+  const leftScore = leftIsSelf ? g.scoreA : g.scoreB;
+  const rightScore = leftIsSelf ? g.scoreB : g.scoreA;
+  const leftServing = leftIsSelf ? g.serveRightIsLeft : !g.serveRightIsLeft;
+
+  const L = GameScreen.dom.left, R = GameScreen.dom.right;
+  L.nameLbl.textContent = leftName; R.nameLbl.textContent = rightName;
+  L.setInd.setUsed(leftSets); R.setInd.setUsed(rightSets);
+  L.toInd.setUsed(leftTO); R.toInd.setUsed(rightTO);
+  L.subLbl.textContent = "交代: "+leftSub+"/6"; R.subLbl.textContent = "交代: "+rightSub+"/6";
+  L.scoreLbl.textContent = String(leftScore); L.scoreLbl.style.color = leftIsSelf ? '#fff' : '#ff0';
+  R.scoreLbl.textContent = String(rightScore); R.scoreLbl.style.color = leftIsSelf ? '#ff0' : '#fff';
+  L.serveDot.classList.toggle('active', leftServing);
+  R.serveDot.classList.toggle('active', !leftServing);
+}
+
+function resetRallyState(){
+  const g = App.game;
+  g.rallyHistoryList = []; g.rallyState = 1; g.lastActivePlayer=""; g.lastActivePlayType=""; g.isLastActiveOpponent=false;
+  g.previousRatioPoint = null; g.lastCreatedArrow = null; g.currentRallyArrows = [];
+  updateRallyLogText();
+}
+
+function cancelAndResetEntireRally(){
+  const g = App.game;
+  while(g.rallyHistoryList.length>0) undoLastAction();
+  resetRallyState();
+}
+
+function undoLastAction(){
+  const g = App.game;
+  if(g.rallyHistoryList.length===0) return;
+  const lastAction = g.rallyHistoryList.pop();
+  undoSingleActionData(lastAction);
+
+  if(lastAction.attachedArrow){
+    let idx = g.arrowList.indexOf(lastAction.attachedArrow); if(idx>=0) g.arrowList.splice(idx,1);
+    idx = g.currentRallyArrows.indexOf(lastAction.attachedArrow); if(idx>=0) g.currentRallyArrows.splice(idx,1);
+  }
+  g.rallyState = lastAction.stateBefore; g.previousRatioPoint = lastAction.loggedPrevPoint;
+
+  if(g.rallyHistoryList.length===0){
+    g.lastActivePlayer=""; g.lastActivePlayType=""; g.isLastActiveOpponent=false; g.lastCreatedArrow=null;
+    g.lastAttackPlayer=""; g.lastAttackType=""; g.isLastAttackOpponent=false;
+  } else {
+    const prev = g.rallyHistoryList[g.rallyHistoryList.length-1];
+    g.lastActivePlayer = prev.playerName; g.lastActivePlayType = prev.playType; g.isLastActiveOpponent = prev.isOpponent; g.lastCreatedArrow = prev.attachedArrow;
+    g.lastAttackPlayer = prev.attackPlayerAfter; g.lastAttackType = prev.attackTypeAfter; g.isLastAttackOpponent = prev.attackOpponentAfter;
+  }
+  updateRallyLogText();
+}
+
+function undoSingleActionData(action){
+  const g = App.game;
+  if(!action.playerName) return;
+  const targetMap = action.isOpponent ? g.opponentStatsMap : g.playerStatsMap;
+  const st = targetMap[action.playerName];
+  if(!st) return;
+  const type = action.playType;
+  if(type==="サーブ") st.serveAttempts = Math.max(0, st.serveAttempts-1);
+  else if(type.indexOf("レセプション")===0){
+    st.receptionTotal = Math.max(0, st.receptionTotal-1);
+    if(type.indexOf("[A]")>=0) st.receptionA = Math.max(0, st.receptionA-1);
+    else if(type.indexOf("[B]")>=0) st.receptionB = Math.max(0, st.receptionB-1);
+    else if(type.indexOf("[C]")>=0) st.receptionC = Math.max(0, st.receptionC-1);
+    else if(type.indexOf("[ミス]")>=0) st.receptionError = Math.max(0, st.receptionError-1);
+  } else if(type==="スパイク") st.spikeAttempts = Math.max(0, st.spikeAttempts-1);
+  else if(type==="フェイント") st.feintAttempts = Math.max(0, st.feintAttempts-1);
+  else if(type==="ミス失点") st.otherErrors = Math.max(0, st.otherErrors-1);
+}
+
+function updateRallyLogText(){
+  const g = App.game;
+  const logText = document.getElementById('rally-log-text');
+  const btnUndo = document.getElementById('btn-undo');
+  const leftWinBtn = document.getElementById('btn-left-win'), rightLoseBtn = document.getElementById('btn-right-lose');
+  if(g.rallyHistoryList.length===0){
+    logText.textContent = "現在のラリー: 待機中 (【"+(g.serveRightIsLeft? g.selfTeamName : g.oppTeamName)+"】サイドをタップして始動)";
+    leftWinBtn.disabled = true; rightLoseBtn.disabled = true; btnUndo.disabled = true;
+  } else {
+    let sb = "ラリー履歴: ";
+    g.rallyHistoryList.forEach((act,i)=>{
+      sb += act.playerName+":"+act.playType;
+      if(i < g.rallyHistoryList.length-1) sb += " ➔ ";
+    });
+    sb += (g.rallyState===2) ? " ➔ 評価待ち..." : " ➔ 継続中...";
+    logText.textContent = sb;
+    leftWinBtn.disabled=false; rightLoseBtn.disabled=false; btnUndo.disabled=false;
+  }
+}
+
+function saveCurrentRallyToPack(selfScored){
+  const g = App.game;
+  if(g.currentRallyArrows.length>0){
+    const label = `Rally ${g.globalRallyCounter} (${g.selfTeamName} ${g.scoreA} - 相手${g.scoreB})`;
+    const pack = newRallyPack(g.globalRallyCounter, label);
+    pack.selfScored = selfScored;
+    pack.arrows = pack.arrows.concat(g.currentRallyArrows);
+    g.rallyPackList.push(pack);
+    g.globalRallyCounter++;
+  }
+}
+
+function addScoreToLeftTeam(isPoint){
+  const g = App.game;
+  const entry = capturePointHistorySnapshot(isPoint);
+  applyStatsBonus(isPoint);
+  g.scoreA++;
+  if(!g.serveRightIsLeft){ g.serveRightIsLeft = true; rotateTeam(true); }
+  saveCurrentRallyToPack(true);
+  if(g.rallyPackList.length>0) entry.pack = g.rallyPackList[g.rallyPackList.length-1];
+  g.pointHistory.push(entry);
+  refreshScoreBoard();
+}
+
+function addScoreToRightTeam(isPoint){
+  const g = App.game;
+  const entry = capturePointHistorySnapshot(isPoint);
+  applyStatsBonus(isPoint);
+  g.scoreB++;
+  if(g.serveRightIsLeft){ g.serveRightIsLeft = false; rotateTeam(false); }
+  saveCurrentRallyToPack(false);
+  if(g.rallyPackList.length>0) entry.pack = g.rallyPackList[g.rallyPackList.length-1];
+  g.pointHistory.push(entry);
+  refreshScoreBoard();
+}
+
+function capturePointHistorySnapshot(isPoint){
+  const g = App.game;
+  return {
+    scoreABefore:g.scoreA, scoreBBefore:g.scoreB,
+    serveRightIsLeftBefore:g.serveRightIsLeft,
+    selfPosBefore:g.selfPos.slice(), oppPosBefore:g.oppPos.slice(),
+    selfLiberoOnCourtBefore:g.selfLiberoOnCourt, selfLiberoReplacedBefore:g.selfLiberoReplaced,
+    oppLiberoOnCourtBefore:g.oppLiberoOnCourt, oppLiberoReplacedBefore:g.oppLiberoReplaced,
+    substitutionCountABefore:g.substitutionCountA, substitutionCountBBefore:g.substitutionCountB,
+    attackPlayer:g.lastAttackPlayer, attackType:g.lastAttackType, attackIsOpponent:g.isLastAttackOpponent,
+    activePlayer:g.lastActivePlayer, activePlayType:g.lastActivePlayType, activeIsOpponent:g.isLastActiveOpponent,
+    isPoint, pack:null
+  };
+}
+
+function revertStatsBonus(attackPlayer, attackType, attackIsOpponent, activePlayer, activePlayType, activeIsOpponent, isPoint){
+  const g = App.game;
+  if(attackPlayer){
+    const attackerMap = attackIsOpponent ? g.opponentStatsMap : g.playerStatsMap;
+    const attackSt = attackerMap[attackPlayer];
+    if(attackSt){
+      const isAttackKill = attackIsOpponent ? !isPoint : isPoint;
+      if(isAttackKill){ if(attackType==="フェイント") attackSt.feintKills--; else attackSt.spikeKills--; }
+      else { if(attackType==="フェイント") attackSt.feintErrors--; else attackSt.spikeErrors--; }
+    }
+  }
+  const alreadyCountedAsAttacker = activePlayer && activePlayer===attackPlayer && activeIsOpponent===attackIsOpponent
+      && (activePlayType==="スパイク" || activePlayType==="フェイント");
+  if(activePlayer && !alreadyCountedAsAttacker){
+    const targetMap = activeIsOpponent ? g.opponentStatsMap : g.playerStatsMap;
+    const st = targetMap[activePlayer];
+    if(st){
+      const stBonus = activeIsOpponent ? !isPoint : isPoint;
+      if(stBonus){
+        if(activePlayType==="スパイク") st.spikeKills--;
+        else if(activePlayType==="フェイント") st.feintKills--;
+        else if(activePlayType==="サーブ") st.serveKills--;
+      } else {
+        if(activePlayType==="スパイク") st.spikeErrors--;
+        else if(activePlayType==="フェイント") st.feintErrors--;
+        else if(activePlayType==="サーブ") st.serveErrors--;
+      }
+    }
+  }
+}
+
+function undoLastFinalizedPoint(){
+  const g = App.game;
+  if(g.pointHistory.length===0){ alert("取り消せる確定済みのラリーがありません。"); return; }
+  const entry = g.pointHistory.pop();
+  revertStatsBonus(entry.attackPlayer, entry.attackType, entry.attackIsOpponent,
+                    entry.activePlayer, entry.activePlayType, entry.activeIsOpponent, entry.isPoint);
+  g.scoreA = entry.scoreABefore; g.scoreB = entry.scoreBBefore;
+  g.serveRightIsLeft = entry.serveRightIsLeftBefore;
+  g.selfPos = entry.selfPosBefore; g.oppPos = entry.oppPosBefore;
+  g.selfLiberoOnCourt = entry.selfLiberoOnCourtBefore; g.selfLiberoReplaced = entry.selfLiberoReplacedBefore;
+  g.oppLiberoOnCourt = entry.oppLiberoOnCourtBefore; g.oppLiberoReplaced = entry.oppLiberoReplacedBefore;
+  g.substitutionCountA = entry.substitutionCountABefore; g.substitutionCountB = entry.substitutionCountBBefore;
+
+  if(entry.pack){
+    let idx = g.rallyPackList.indexOf(entry.pack); if(idx>=0) g.rallyPackList.splice(idx,1);
+    g.arrowList = g.arrowList.filter(a=> entry.pack.arrows.indexOf(a)===-1);
+  }
+  refreshHeaderScoreBar();
+  syncPositionsAndCourtArrays(true);
+  syncPositionsAndCourtArrays(false);
+  GameScreen.drawCourt();
+}
+
+function applyStatsBonus(isPoint){
+  const g = App.game;
+  if(g.lastAttackPlayer){
+    const attackerMap = g.isLastAttackOpponent ? g.opponentStatsMap : g.playerStatsMap;
+    const attackSt = attackerMap[g.lastAttackPlayer];
+    if(attackSt){
+      const isAttackKill = g.isLastAttackOpponent ? !isPoint : isPoint;
+      if(isAttackKill){ if(g.lastAttackType==="フェイント") attackSt.feintKills++; else attackSt.spikeKills++; }
+      else { if(g.lastAttackType==="フェイント") attackSt.feintErrors++; else attackSt.spikeErrors++; }
+    }
+  }
+  const alreadyCountedAsAttacker = !!g.lastActivePlayer && g.lastActivePlayer===g.lastAttackPlayer
+      && g.isLastActiveOpponent===g.isLastAttackOpponent
+      && (g.lastActivePlayType==="スパイク" || g.lastActivePlayType==="フェイント");
+  if(g.lastActivePlayer && !alreadyCountedAsAttacker){
+    const targetMap = g.isLastActiveOpponent ? g.opponentStatsMap : g.playerStatsMap;
+    const st = targetMap[g.lastActivePlayer];
+    if(st){
+      const stBonus = g.isLastActiveOpponent ? !isPoint : isPoint;
+      if(stBonus){
+        if(g.lastActivePlayType==="スパイク") st.spikeKills++;
+        else if(g.lastActivePlayType==="フェイント") st.feintKills++;
+        else if(g.lastActivePlayType==="サーブ") st.serveKills++;
+      } else {
+        if(g.lastActivePlayType==="スパイク") st.spikeErrors++;
+        else if(g.lastActivePlayType==="フェイント") st.feintErrors++;
+        else if(g.lastActivePlayType==="サーブ") st.serveErrors++;
+      }
+    }
+  }
+}
+
+function refreshScoreBoard(){
+  const g = App.game;
+  refreshHeaderScoreBar(); resetRallyState();
+  if(g.scoreA>=25 && (g.scoreA-g.scoreB)>=2){
+    g.setsA++; refreshHeaderScoreBar();
+    alert(g.selfTeamName+"がセット獲得 ("+g.scoreA+"-"+g.scoreB+")");
+    resetScoresForNextSet();
+  } else if(g.scoreB>=25 && (g.scoreB-g.scoreA)>=2){
+    g.setsB++; refreshHeaderScoreBar();
+    alert(g.oppTeamName+"がセット獲得 ("+g.scoreA+"-"+g.scoreB+")");
+    resetScoresForNextSet();
+  }
+}
+
+function resetScoresForNextSet(){
+  const g = App.game;
+  if(g.setsA===2 || g.setsB===2){
+    alert("試合終了！勝利: "+((g.setsA===2)? g.selfTeamName : g.oppTeamName));
+    App.finishGameAndReturnToTitle();
+    return;
+  }
+  g.scoreA=0; g.scoreB=0; g.timeoutsA=0; g.timeoutsB=0; refreshHeaderScoreBar();
+  g.substitutionCountA=0; g.substitutionCountB=0;
+  g.selfLockedPair={}; g.oppLockedPair={};
+  g.selfLiberoOnCourt=null; g.selfLiberoReplaced=null;
+  g.oppLiberoOnCourt=null; g.oppLiberoReplaced=null;
+  g.selfPos = g.initialSelfPos.slice();
+  g.oppPos = g.initialOppPos.slice();
+  syncPositionsAndCourtArrays(true);
+  syncPositionsAndCourtArrays(false);
+  selectInitialServeTeam();
+}
+
+/* ---------- ローテーション・リベロ・選手交代 ---------- */
+function rotateTeam(isSelfTeam){
+  const g = App.game;
+  const pos = isSelfTeam ? g.selfPos : g.oppPos;
+  const old = pos.slice();
+  pos[5]=old[0]; pos[0]=old[1]; pos[1]=old[2]; pos[2]=old[3]; pos[3]=old[4]; pos[4]=old[5];
+  checkLiberoFrontRow(isSelfTeam);
+  syncPositionsAndCourtArrays(isSelfTeam);
+}
+
+function checkLiberoFrontRow(isSelfTeam){
+  const g = App.game;
+  const liberoOnCourt = isSelfTeam ? g.selfLiberoOnCourt : g.oppLiberoOnCourt;
+  if(liberoOnCourt==null) return;
+  const pos = isSelfTeam ? g.selfPos : g.oppPos;
+  const idx = indexOfArr(pos, liberoOnCourt);
+  if(idx===1 || idx===2 || idx===3){
+    const replaced = isSelfTeam ? g.selfLiberoReplaced : g.oppLiberoReplaced;
+    pos[idx] = replaced;
+    if(isSelfTeam){ g.selfLiberoOnCourt=null; g.selfLiberoReplaced=null; }
+    else { g.oppLiberoOnCourt=null; g.oppLiberoReplaced=null; }
+  }
+}
+
+function syncPositionsAndCourtArrays(isSelfTeam){
+  const g = App.game;
+  const pos = isSelfTeam ? g.selfPos : g.oppPos;
+  const map = isSelfTeam ? g.playerStatsMap : g.opponentStatsMap;
+  const labels = ["S1","S2","S3","S4","S5","S6"];
+
+  Object.values(map).forEach(st=>{ if(st) st.position=""; });
+  for(let i=0;i<6;i++){
+    if(pos[i]==null) continue;
+    let st = map[pos[i]];
+    if(!st){ st = newPlayerStats(pos[i], true); map[pos[i]] = st; }
+    st.position = labels[i];
+  }
+  const rebuilt = [pos[3],pos[2],pos[1],pos[4],pos[5],pos[0]];
+  if(isSelfTeam) g.currentS = rebuilt; else g.currentOppS = rebuilt;
+
+  refreshHeaderScoreBar();
+  refreshScrollContent(isSelfTeam);
+  GameScreen.drawCourt();
+}
+
+function isLiberoPlayer(isSelfTeam, name){
+  const g = App.game;
+  const liberos = isSelfTeam ? g.selfLiberoNames : g.oppLiberoNames;
+  if(!liberos || !name) return false;
+  return liberos.indexOf(name) >= 0;
+}
+
+function refreshScrollContent(isSelfTeam){
+  const g = App.game;
+  const container = document.getElementById(isSelfTeam ? 'bench-left' : 'bench-right');
+  container.innerHTML = "";
+  const roster = isSelfTeam ? g.selfRoster : g.oppRoster;
+  const pos = isSelfTeam ? g.selfPos : g.oppPos;
+  const liberoOnCourt = isSelfTeam ? g.selfLiberoOnCourt : g.oppLiberoOnCourt;
+  const baseColor = isSelfTeam ? 'rgb(0,102,204)' : 'rgb(204,51,51)';
+  const benchColor = isSelfTeam ? 'rgb(0,51,102)' : 'rgb(102,25,25)';
+  const LIBERO_COLOR = '#eab308', LIBERO_COLOR_DARK = '#a16207';
+  const labels = ["S1","S2","S3","S4","S5","S6"];
+
+  (roster||[]).forEach(n=>{
+    if(!n || n.indexOf("未登録")>=0) return;
+    let onCourt=false, posLabel="";
+    for(let i=0;i<6;i++){ if(n===pos[i]){ onCourt=true; posLabel=labels[i]; break; } }
+    const isLibero = isLiberoPlayer(isSelfTeam, n);
+    const isLiberoActive = n===liberoOnCourt;
+
+    const b = document.createElement('button');
+    b.className = 'bench-btn';
+    b.innerHTML = escapeHtml(n).replace(":", "<br>") + `<br><span style="font-size:11px;">${onCourt?posLabel:'控え'}</span>`;
+    if(isLibero){
+      b.style.background = isLiberoActive ? LIBERO_COLOR : LIBERO_COLOR_DARK;
+      b.style.border = '2px solid #fff'; b.style.borderWidth = onCourt? '3px':'1px';
+    } else {
+      b.style.background = onCourt ? baseColor : benchColor;
+      b.style.border = (onCourt? '2px solid #fff' : '1px solid gray');
+    }
+    if(!onCourt){
+      b.addEventListener('click', ()=> openSubstitutionChooser(isSelfTeam, n));
+    }
+    container.appendChild(b);
+  });
+}
+
+function openSubstitutionChooser(isSelfTeam, benchPlayer){
+  const g = App.game;
+  const pos = isSelfTeam ? g.selfPos : g.oppPos;
+  const lockedPair = isSelfTeam ? g.selfLockedPair : g.oppLockedPair;
+  const liberoOnCourt = isSelfTeam ? g.selfLiberoOnCourt : g.oppLiberoOnCourt;
+  const liberoReplaced = isSelfTeam ? g.selfLiberoReplaced : g.oppLiberoReplaced;
+
+  if(benchPlayer===liberoReplaced){
+    const idx = indexOfArr(pos, liberoOnCourt);
+    if(idx>=0){
+      pos[idx] = benchPlayer;
+      if(isSelfTeam){ g.selfLiberoOnCourt=null; g.selfLiberoReplaced=null; }
+      else { g.oppLiberoOnCourt=null; g.oppLiberoReplaced=null; }
+      syncPositionsAndCourtArrays(isSelfTeam);
+    }
+    return;
+  }
+
+  if(isLiberoPlayer(isSelfTeam, benchPlayer)){
+    if(liberoOnCourt!=null){ alert("既にリベロが出場中です。先にそのリベロを戻してから交代してください。"); return; }
+    const targets = [];
+    [0,4,5].forEach(idx=>{ if(pos[idx]!=null) targets.push(pos[idx]); });
+    if(targets.length===0){ alert("交代できる後衛の選手がいません。"); return; }
+    openTapChooser(benchPlayer+" と交代する後衛の選手をタップしてください", isSelfTeam, targets, (chosen)=>{
+      const idx = indexOfArr(pos, chosen);
+      pos[idx] = benchPlayer;
+      if(isSelfTeam){ g.selfLiberoOnCourt=benchPlayer; g.selfLiberoReplaced=chosen; }
+      else { g.oppLiberoOnCourt=benchPlayer; g.oppLiberoReplaced=chosen; }
+      syncPositionsAndCourtArrays(isSelfTeam);
+    });
+    return;
+  }
+
+  const subCount = isSelfTeam ? g.substitutionCountA : g.substitutionCountB;
+  if(subCount>=6){ alert("選手交代は1セット6回までです。"); return; }
+
+  const lockedPartner = lockedPair[benchPlayer];
+  const eligibleTargets = [];
+  for(let i=0;i<6;i++){
+    const onCourt = pos[i];
+    if(onCourt==null || onCourt===liberoOnCourt) continue;
+    const onCourtPartner = lockedPair[onCourt];
+    if(onCourtPartner!=null){
+      if(benchPlayer===onCourtPartner) eligibleTargets.push(onCourt);
+    } else if(lockedPartner==null){
+      eligibleTargets.push(onCourt);
+    }
+  }
+  if(eligibleTargets.length===0){
+    alert("この選手が交代できる相手がいません。\n(一度交代したペアは、そのペアの相手としか戻れません)");
+    return;
+  }
+  openTapChooser(benchPlayer+" と交代する選手をタップしてください", isSelfTeam, eligibleTargets, (chosen)=>{
+    const idx = indexOfArr(pos, chosen);
+    pos[idx] = benchPlayer;
+    lockedPair[benchPlayer]=chosen; lockedPair[chosen]=benchPlayer;
+    if(isSelfTeam) g.substitutionCountA++; else g.substitutionCountB++;
+    syncPositionsAndCourtArrays(isSelfTeam);
+  });
+}
+
+function openTapChooser(headerText, isSelfTeam, targets, onChoose){
+  const g = App.game;
+  const pos = isSelfTeam ? g.selfPos : g.oppPos;
+  const labels = ["S1","S2","S3","S4","S5","S6"];
+  const liberoOnCourt = isSelfTeam ? g.selfLiberoOnCourt : g.oppLiberoOnCourt;
+
+  const modalRoot = document.getElementById('modal-root');
+  modalRoot.innerHTML = "";
+  const overlay = document.createElement('div'); overlay.className='modal-overlay';
+  const box = document.createElement('div'); box.className='chooser-box';
+  const title = document.createElement('div'); title.className='chooser-title'; title.textContent = headerText;
+  box.appendChild(title);
+  const grid = document.createElement('div'); grid.className='chooser-grid';
+  targets.forEach(t=>{
+    const idx = indexOfArr(pos, t);
+    const posLabel = idx>=0 ? labels[idx] : "";
+    const isLib = t===liberoOnCourt;
+    const shortName = t.indexOf(":")>=0 ? t.split(":")[0] : t;
+    const b = document.createElement('button');
+    b.innerHTML = `<span class="cg-pos">${posLabel}</span>${escapeHtml(shortName)}`;
+    if(isLib) b.style.background = '#a16207';
+    b.addEventListener('click', ()=>{ onChoose(t); modalRoot.innerHTML=""; });
+    grid.appendChild(b);
+  });
+  box.appendChild(grid);
+  const cancelBtn = document.createElement('button'); cancelBtn.className='chooser-cancel'; cancelBtn.textContent='← キャンセル';
+  cancelBtn.addEventListener('click', ()=> modalRoot.innerHTML="");
+  box.appendChild(cancelBtn);
+  overlay.appendChild(box); modalRoot.appendChild(overlay);
+}
+
+/* ---------- 汎用：選択肢ダイアログ (JOptionPane.showOptionDialog 相当) ---------- */
+function optionDialog(message, options, onChoose){
+  const modalRoot = document.getElementById('modal-root');
+  modalRoot.innerHTML = "";
+  const overlay = document.createElement('div'); overlay.className='modal-overlay';
+  const box = document.createElement('div'); box.className='chooser-box'; box.style.width='340px';
+  const title = document.createElement('div'); title.className='chooser-title'; title.textContent = message;
+  box.appendChild(title);
+  const grid = document.createElement('div'); grid.className='chooser-grid'; grid.style.gridTemplateColumns='1fr 1fr';
+  options.forEach((opt,i)=>{
+    const b = document.createElement('button'); b.textContent = opt;
+    b.addEventListener('click', ()=>{ modalRoot.innerHTML=""; onChoose(i); });
+    grid.appendChild(b);
+  });
+  box.appendChild(grid);
+  overlay.appendChild(box); modalRoot.appendChild(overlay);
+}
+</script>
+<script>
+"use strict";
+/* =========================================================
+   openFastInputDialog ― プレー入力ダイアログ(PLAYER/RECEPTION_EVAL/PLAY)
+   ========================================================= */
+function openFastInputDialog(currentPoint){
+  const g = App.game;
+  const titleStr = (g.rallyState===1) ? "【サーブ】を打った選手" : "触った選手を選択";
+  const activePlayers = (g.rallyState===1) ? (g.serveRightIsLeft ? g.currentS : g.currentOppS)
+                                            : (g.lastTapIsLeft ? g.currentS : g.currentOppS);
+  const finalIsOpponent = (g.rallyState===1) ? !g.serveRightIsLeft : !g.lastTapIsLeft;
+
+  const modalRoot = document.getElementById('modal-root');
+  modalRoot.innerHTML = "";
+  const overlay = document.createElement('div'); overlay.className='modal-overlay';
+  const box = document.createElement('div'); box.className='modal-box';
+  overlay.appendChild(box); modalRoot.appendChild(overlay);
+
+  function closeDialog(){ modalRoot.innerHTML = ""; }
+
+  function buildPlayerCard(){
+    const wrap = document.createElement('div');
+    const title = document.createElement('div'); title.className='modal-title'; title.textContent = titleStr;
+    wrap.appendChild(title);
+    const grid = document.createElement('div'); grid.className='modal-grid';
+    (activePlayers||[]).forEach(pName=>{
+      const displayName = pName==null ? "未配置" : pName;
+      const btn = document.createElement('button'); btn.textContent = displayName;
+      btn.addEventListener('click', ()=>{
+        g.tempPlayer = displayName;
+        g.isLastActiveOpponent = finalIsOpponent;
+
+        if(g.rallyState===1){
+          const act = newActionHistory(g.tempPlayer, "サーブ", finalIsOpponent, 1, g.previousRatioPoint);
+          const arrow = newArrowData(g.globalRallyCounter, g.tempPlayer, "サーブ", "S", finalIsOpponent, currentPoint, currentPoint);
+          g.arrowList.push(arrow); g.currentRallyArrows.push(arrow); g.lastCreatedArrow = arrow;
+          act.attachedArrow = arrow;
+          act.attackPlayerAfter = g.lastAttackPlayer; act.attackTypeAfter = g.lastAttackType; act.attackOpponentAfter = g.isLastAttackOpponent;
+          g.rallyHistoryList.push(act);
+          g.lastActivePlayer = g.tempPlayer; g.lastActivePlayType = "サーブ";
+          const map = finalIsOpponent ? g.opponentStatsMap : g.playerStatsMap;
+          if(map[g.tempPlayer]) map[g.tempPlayer].serveAttempts++;
+          g.previousRatioPoint = currentPoint;
+          g.rallyState = 2;
+          closeDialog();
+          updateRallyLogText();
+        } else {
+          g.lastActivePlayer = g.tempPlayer;
+          if(g.rallyState===2) showCard('RECEPTION_EVAL'); else showCard('PLAY');
+        }
+      });
+      grid.appendChild(btn);
+    });
+    wrap.appendChild(grid);
+
+    const bottom = document.createElement('div'); bottom.className='modal-bottom';
+    const scoreRow = document.createElement('div'); scoreRow.className='score-row';
+    const winBtn = document.createElement('button'); winBtn.textContent='得点'; winBtn.style.background='#008200';
+    winBtn.addEventListener('click', ()=>{
+      closeDialog();
+      finalizeLastPlayEndLocation(currentPoint);
+      if(g.isLastActiveOpponent) addScoreToRightTeam(false); else addScoreToLeftTeam(true);
+      g.lastAttackPlayer=""; g.lastAttackType=""; g.lastActivePlayType="";
+    });
+    const loseBtn = document.createElement('button'); loseBtn.textContent='失点'; loseBtn.style.background='#a01414';
+    loseBtn.addEventListener('click', ()=>{
+      closeDialog();
+      finalizeLastPlayEndLocation(currentPoint);
+      if(g.isLastActiveOpponent) addScoreToLeftTeam(true); else addScoreToRightTeam(false);
+      g.lastAttackPlayer=""; g.lastAttackType=""; g.lastActivePlayType="";
+    });
+    scoreRow.append(winBtn, loseBtn);
+    bottom.appendChild(scoreRow);
+    const closeBtn = document.createElement('button'); closeBtn.className='close-btn'; closeBtn.textContent='閉じる';
+    closeBtn.addEventListener('click', closeDialog);
+    bottom.appendChild(closeBtn);
+    wrap.appendChild(bottom);
+    return wrap;
+  }
+
+  function buildReceptionCard(){
+    const wrap = document.createElement('div');
+    const title = document.createElement('div'); title.className='modal-title'; title.textContent='レセプション評価';
+    wrap.appendChild(title);
+    const grid = document.createElement('div'); grid.className='modal-grid';
+    const grades = ["A","B","C","ミス","エース","サーブミス"];
+    grades.forEach(grade=>{
+      const btn = document.createElement('button'); btn.textContent = grade;
+      if(grade==="ミス" || grade==="エース"){
+        btn.style.background = grade==="ミス" ? '#a01414' : '#008c00';
+        btn.addEventListener('click', ()=>{
+          const act = newActionHistory(g.tempPlayer, "レセプション["+grade+"]", finalIsOpponent, 2, g.previousRatioPoint);
+          const arrow = newArrowData(g.globalRallyCounter, g.tempPlayer, "レセプション", "R", finalIsOpponent, currentPoint, currentPoint);
+          g.arrowList.push(arrow); g.currentRallyArrows.push(arrow);
+          act.attachedArrow = arrow;
+          g.rallyHistoryList.push(act);
+          const st = (finalIsOpponent ? g.opponentStatsMap : g.playerStatsMap)[g.tempPlayer];
+          if(st){ st.receptionTotal++; st.receptionError++; }
+          closeDialog();
+          finalizeLastPlayEndLocation(currentPoint);
+          if(grade==="エース"){ if(g.lastTapIsLeft) addScoreToRightTeam(true); else addScoreToLeftTeam(true); }
+          else { if(g.lastTapIsLeft) addScoreToRightTeam(false); else addScoreToLeftTeam(false); }
+          g.lastAttackPlayer=""; g.lastAttackType=""; g.lastActivePlayType="";
+        });
+      } else if(grade==="サーブミス"){
+        btn.style.background = '#eab308'; btn.style.color = '#000';
+        btn.addEventListener('click', ()=>{
+          g.rallyHistoryList.push(newActionHistory("", "相手サーブミス", true, 2, g.previousRatioPoint));
+          closeDialog();
+          finalizeLastPlayEndLocation(currentPoint);
+          if(g.lastTapIsLeft) addScoreToLeftTeam(false); else addScoreToRightTeam(false);
+          g.lastAttackPlayer=""; g.lastAttackType=""; g.lastActivePlayType="";
+        });
+      } else {
+        btn.style.background = '#324664';
+        btn.addEventListener('click', ()=>{
+          const act = newActionHistory(g.tempPlayer, "レセプション["+grade+"]", finalIsOpponent, 2, g.previousRatioPoint);
+          const arrow = newArrowData(g.globalRallyCounter, g.tempPlayer, "レセプション", "R", finalIsOpponent, currentPoint, currentPoint);
+          g.arrowList.push(arrow); g.currentRallyArrows.push(arrow); g.lastCreatedArrow = arrow;
+          act.attachedArrow = arrow;
+          act.attackPlayerAfter = g.lastAttackPlayer; act.attackTypeAfter = g.lastAttackType; act.attackOpponentAfter = g.isLastAttackOpponent;
+          g.rallyHistoryList.push(act);
+          const st = (finalIsOpponent ? g.opponentStatsMap : g.playerStatsMap)[g.tempPlayer];
+          if(st){
+            st.receptionTotal++;
+            if(grade==="A") st.receptionA++; else if(grade==="B") st.receptionB++; else if(grade==="C") st.receptionC++;
+          }
+          g.previousRatioPoint = currentPoint;
+          g.rallyState = 3;
+          modalRoot.innerHTML = ""; // setVisible(false) 相当：ダイアログを閉じて次のタップ待ち
+          g.isWaitingForLocation = true;
+          updateRallyLogText();
+        });
+      }
+      grid.appendChild(btn);
+    });
+    wrap.appendChild(grid);
+    const backBtn = document.createElement('button'); backBtn.textContent='← 戻る';
+    backBtn.style.margin='5px 10px 10px'; backBtn.style.width='calc(100% - 20px)'; backBtn.style.height='40px';
+    backBtn.style.background='#333'; backBtn.style.color='#fff'; backBtn.style.fontWeight='bold';
+    backBtn.addEventListener('click', ()=> showCard('PLAYER'));
+    wrap.appendChild(backBtn);
+    return wrap;
+  }
+
+  function buildPlayCard(){
+    const wrap = document.createElement('div');
+    const title = document.createElement('div'); title.className='modal-title'; title.textContent='今のプレーを選択';
+    wrap.appendChild(title);
+    const grid = document.createElement('div'); grid.className='modal-grid';
+    const plays = ["レシーブ","トス","スパイク","ブロック","フリー","フェイント"];
+    const codes = ["D","T","K","B","H","F"];
+    plays.forEach((play,i)=>{
+      const code = codes[i];
+      const btn = document.createElement('button'); btn.textContent = play; btn.style.background='#463c5a';
+      btn.addEventListener('click', ()=>{
+        const nextState = (play==="ブロック") ? 4 : 3;
+        g.lastActivePlayer = g.tempPlayer;
+        g.isLastActiveOpponent = finalIsOpponent;
+        g.lastActivePlayType = (play==="レシーブ") ? "ディグ" : play;
+
+        const act = newActionHistory(g.tempPlayer, play, finalIsOpponent, g.rallyState, g.previousRatioPoint);
+        const arrow = newArrowData(g.globalRallyCounter, g.tempPlayer, play, code, finalIsOpponent, currentPoint, currentPoint);
+        g.arrowList.push(arrow); g.currentRallyArrows.push(arrow); g.lastCreatedArrow = arrow;
+        act.attachedArrow = arrow;
+
+        const targetMap = finalIsOpponent ? g.opponentStatsMap : g.playerStatsMap;
+        const st = targetMap[g.tempPlayer];
+        if(st){
+          if(play==="スパイク"){ st.spikeAttempts++; g.lastAttackPlayer=g.tempPlayer; g.lastAttackType="スパイク"; g.isLastAttackOpponent=finalIsOpponent; }
+          else if(play==="フェイント"){ st.feintAttempts++; g.lastAttackPlayer=g.tempPlayer; g.lastAttackType="フェイント"; g.isLastAttackOpponent=finalIsOpponent; }
+        }
+        act.attackPlayerAfter = g.lastAttackPlayer; act.attackTypeAfter = g.lastAttackType; act.attackOpponentAfter = g.isLastAttackOpponent;
+        g.rallyHistoryList.push(act);
+        g.previousRatioPoint = currentPoint;
+        g.rallyState = nextState;
+
+        modalRoot.innerHTML = ""; // setVisible(false) 相当
+        g.isWaitingForLocation = true;
+        updateRallyLogText();
+      });
+      grid.appendChild(btn);
+    });
+    wrap.appendChild(grid);
+
+    const bottom = document.createElement('div'); bottom.className='modal-bottom';
+    const errBtn = document.createElement('button'); errBtn.className='err-btn'; errBtn.textContent='このプレーのミスで失点確定';
+    errBtn.addEventListener('click', ()=>{
+      g.rallyHistoryList.push(newActionHistory(g.tempPlayer, "ミス失点", finalIsOpponent, 3, g.previousRatioPoint));
+      const map = finalIsOpponent ? g.opponentStatsMap : g.playerStatsMap;
+      if(map[g.tempPlayer]) map[g.tempPlayer].otherErrors++;
+      closeDialog();
+      finalizeLastPlayEndLocation(currentPoint);
+      if(g.lastTapIsLeft) addScoreToRightTeam(false); else addScoreToLeftTeam(false);
+      g.lastAttackPlayer=""; g.lastAttackType=""; g.lastActivePlayType="";
+    });
+    bottom.appendChild(errBtn);
+    const backBtn = document.createElement('button'); backBtn.className='back-btn'; backBtn.textContent='← 戻る';
+    backBtn.addEventListener('click', ()=> showCard('PLAYER'));
+    bottom.appendChild(backBtn);
+    wrap.appendChild(bottom);
+    return wrap;
+  }
+
+  function showCard(name){
+    box.innerHTML = "";
+    if(name==='PLAYER') box.appendChild(buildPlayerCard());
+    else if(name==='RECEPTION_EVAL') box.appendChild(buildReceptionCard());
+    else if(name==='PLAY') box.appendChild(buildPlayCard());
+  }
+
+  showCard('PLAYER');
+}
+</script>
+<script>
+"use strict";
+/* =========================================================
+   StatsPanel 相当 ― データ集計表画面
+   ========================================================= */
+function createStatsState(selfMap, oppMap){
+  return { selfMap, oppMap, isShowingSelf: true };
+}
+
+const STATS_COLUMNS = [
+  "選手名","スパイク打数","得点","失点","得点率","失点率","効果率",
+  "フェイント打数","得点","失点","得点率","失点率","効果率",
+  "ブロック得点","ブロック失点",
+  "レセプション受数","Aパス","Aパス率","Bパス","Bパス率","Cパス","Cパス率","ミス","ミス率",
+  "サーブ打数","得点","失点","得点率","失点率","効果率",
+  "その他失点","総合得点","総合失点","合計"
+];
+
+function pct(numer, denom){ return denom>0 ? Math.round((numer/denom)*100)+"%" : "0%"; }
+
+const StatsScreen = {
+  render(screenId, state, isRecordView){
+    const titleEl = document.getElementById(screenId==='screen-stats' ? 'stats-title' : 'record-stats-title');
+    const tableEl = document.getElementById(screenId==='screen-stats' ? 'stats-table' : 'record-stats-table');
+    const idp = screenId==='screen-stats' ? 'stats-' : 'record-stats-';
+    const btnToggle = document.getElementById(idp+'btn-toggle');
+    const btnChart = document.getElementById(idp+'btn-chart');
+    const btnBack = document.getElementById(idp+'btn-back');
+
+    const paint = ()=>{
+      titleEl.textContent = "リアルタイム個人データ集計表 ("+(state.isShowingSelf?"自チーム":"相手チーム")+")";
+      this.loadTableData(tableEl, state.isShowingSelf ? state.selfMap : state.oppMap, state.isShowingSelf);
+      btnToggle.textContent = state.isShowingSelf ? "相手チームのデータに切り替え" : "自チームのデータに切り替え";
+      btnToggle.style.background = state.isShowingSelf ? '#dc2626' : '#3b82f6';
+    };
+
+    btnToggle.onclick = ()=>{ state.isShowingSelf = !state.isShowingSelf; paint(); };
+    btnChart.onclick = ()=>{ if(isRecordView) App.showRecordChartPage(); else App.showChartPage(); };
+    btnBack.textContent = isRecordView ? "タイトル画面に戻る" : "元の入力画面に戻る";
+    btnBack.onclick = ()=>{ if(isRecordView) App.showTitleScreen(); else App.backToGame(); };
+
+    paint();
+  },
+
+  loadTableData(tableEl, statsMap, isSelf){
+    let list = Object.values(statsMap||{}).filter(st=> st && st.name && st.name.trim()!=="");
+    if(isSelf){
+      list.sort((a,b)=>{
+        try{
+          const n1 = parseInt((a.name.split(":")[0]),10), n2 = parseInt((b.name.split(":")[0]),10);
+          if(isNaN(n1) || isNaN(n2)) return a.name.localeCompare(b.name);
+          return n1-n2;
+        }catch(e){ return a.name.localeCompare(b.name); }
+      });
+    } else {
+      list.sort((a,b)=>{
+        try{
+          const n1 = parseInt(a.name.replace(/[^0-9]/g,""),10), n2 = parseInt(b.name.replace(/[^0-9]/g,""),10);
+          if(isNaN(n1) || isNaN(n2)) return a.name.localeCompare(b.name);
+          return n1-n2;
+        }catch(e){ return a.name.localeCompare(b.name); }
+      });
+    }
+
+    let html = "<thead><tr>"+STATS_COLUMNS.map(c=>"<th>"+escapeHtml(c)+"</th>").join("")+"</tr></thead><tbody>";
+    list.forEach(st=>{
+      const spikeKillRate = pct(st.spikeKills, st.spikeAttempts);
+      const spikeErrorRate = pct(st.spikeErrors, st.spikeAttempts);
+      const spikeEff = st.spikeAttempts>0 ? Math.round(((st.spikeKills-st.spikeErrors)/st.spikeAttempts)*100)+"%" : "0%";
+      const feintKillRate = pct(st.feintKills, st.feintAttempts);
+      const feintErrorRate = pct(st.feintErrors, st.feintAttempts);
+      const feintEff = st.feintAttempts>0 ? Math.round(((st.feintKills-st.feintErrors)/st.feintAttempts)*100)+"%" : "0%";
+      const recepARate = pct(st.receptionA, st.receptionTotal);
+      const recepBRate = pct(st.receptionB, st.receptionTotal);
+      const recepCRate = pct(st.receptionC, st.receptionTotal);
+      const recepErrRate = pct(st.receptionError, st.receptionTotal);
+      const serveKillRate = pct(st.serveKills, st.serveAttempts);
+      const serveErrorRate = pct(st.serveErrors, st.serveAttempts);
+      const serveEff = st.serveAttempts>0 ? Math.round(((st.serveKills-st.serveErrors)/st.serveAttempts)*100)+"%" : "0%";
+      const totalKills = st.spikeKills+st.feintKills+st.blockKills+st.serveKills;
+      const totalErrors = st.spikeErrors+st.feintErrors+st.blockErrors+st.receptionError+st.serveErrors+st.otherErrors;
+      const totalBalance = totalKills-totalErrors;
+
+      const row = [ st.name,
+        st.spikeAttempts, st.spikeKills, st.spikeErrors, spikeKillRate, spikeErrorRate, spikeEff,
+        st.feintAttempts, st.feintKills, st.feintErrors, feintKillRate, feintErrorRate, feintEff,
+        st.blockKills, st.blockErrors,
+        st.receptionTotal, st.receptionA, recepARate, st.receptionB, recepBRate, st.receptionC, recepCRate, st.receptionError, recepErrRate,
+        st.serveAttempts, st.serveKills, st.serveErrors, serveKillRate, serveErrorRate, serveEff,
+        st.otherErrors, totalKills, totalErrors, totalBalance
+      ];
+      html += "<tr>"+row.map(v=>"<td>"+escapeHtml(v)+"</td>").join("")+"</tr>";
+    });
+    html += "</tbody>";
+    tableEl.innerHTML = html;
+  }
+};
+</script>
+<script>
+"use strict";
+/* =========================================================
+   ChartPanel 相当 ― 戦略プレー軌跡チャート画面
+   ========================================================= */
+const CHART_COLOR_PALETTE = [
+  "rgb(239,68,68)","rgb(59,130,246)","rgb(16,185,129)",
+  "rgb(56,189,248)","rgb(139,92,246)","rgb(6,182,212)",
+  "rgb(236,72,153)","rgb(79,70,229)","rgb(20,184,166)",
+  "rgb(168,85,247)","rgb(219,39,119)","rgb(99,102,241)",
+  "rgb(34,197,94)","rgb(14,165,233)","rgb(217,70,239)",
+  "rgb(45,212,191)","rgb(251,113,133)","rgb(192,132,252)",
+  "rgb(52,211,153)","rgb(2,132,199)"
+];
+const COURT_BASE_SCALE = 1000.0;
+
+function createChartState(selfMap, oppMap, arrows, rallies){
+  const state = {
+    selfPlayerMap: selfMap, oppPlayerMap: oppMap,
+    globalArrows: arrows||[], globalRallies: rallies||[],
+    chartTeamMode: 0,
+    playerColorMap: {}
+  };
+  assignChartColors(state);
+  return state;
+}
+
+function getPlayersWithArrows(state){
+  const set = new Set();
+  (state.globalArrows||[]).forEach(a=>{ if(a && a.playerName) set.add(a.playerName); });
+  return set;
+}
+
+function assignChartColors(state){
+  let cIdx = Object.keys(state.playerColorMap).length;
+  const playedNames = getPlayersWithArrows(state);
+  Object.keys(state.selfPlayerMap||{}).forEach(name=>{
+    if(!playedNames.has(name) || state.playerColorMap[name]) return;
+    state.playerColorMap[name] = CHART_COLOR_PALETTE[cIdx % CHART_COLOR_PALETTE.length]; cIdx++;
+  });
+  Object.keys(state.oppPlayerMap||{}).forEach(name=>{
+    if(!playedNames.has(name) || state.playerColorMap[name]) return;
+    state.playerColorMap[name] = CHART_COLOR_PALETTE[cIdx % CHART_COLOR_PALETTE.length]; cIdx++;
+  });
+}
+
+const ChartScreen = {
+  render(screenId, state, isRecordView){
+    const prefix = screenId==='screen-chart' ? 'chart-' : 'record-chart-';
+    const el = id => document.getElementById(prefix+id);
+    const canvas = el('canvas');
+    const wrap = document.getElementById(prefix+'canvas-wrap');
+
+    const titleEl = el('title');
+    const btnToggleTeam = el('btn-toggle-team');
+    const selRally = el('select-rally');
+    const selPlayer = el('select-player');
+    const selPlayType = el('select-playtype');
+    const btnBackStats = el('btn-back-stats');
+    const btnBackGame = el('btn-back-game');
+
+    if(selPlayType.options.length===0){
+      ["全種類","スパイク","フェイント","サーブ","トス","レセプション","レシーブ","ブロック","フリー"].forEach(v=>{
+        const o=document.createElement('option'); o.value=v; o.textContent=v; selPlayType.appendChild(o);
+      });
+    }
+
+    const redraw = ()=> this.drawCanvas(canvas, state, selPlayer, selPlayType, selRally);
+
+    const updateFilters = ()=>{
+      const selectedRallyVal = selRally.value;
+      selRally.innerHTML = "";
+      const optAll = document.createElement('option'); optAll.value="__ALL__"; optAll.textContent="全ラリー重ね合わせ";
+      selRally.appendChild(optAll);
+      (state.globalRallies||[]).forEach((rp,idx)=>{
+        const o = document.createElement('option'); o.value = String(idx); o.textContent = rp.scoreLabel; selRally.appendChild(o);
+      });
+      if([...selRally.options].some(o=>o.value===selectedRallyVal)) selRally.value = selectedRallyVal;
+
+      selPlayer.innerHTML = "";
+      const optAllP = document.createElement('option'); optAllP.value="全員表示"; optAllP.textContent="全員表示"; selPlayer.appendChild(optAllP);
+      const playedNames = getPlayersWithArrows(state);
+
+      if(state.chartTeamMode===0){
+        titleEl.textContent = "戦略プレー軌跡チャート (表示中: 自チーム)";
+        btnToggleTeam.textContent = "相手チームのチャートに切り替え"; btnToggleTeam.style.background='#dc2626';
+        selPlayer.disabled = false;
+        Object.keys(state.selfPlayerMap||{}).forEach(n=>{ if(playedNames.has(n)){ const o=document.createElement('option'); o.value=n; o.textContent=n; selPlayer.appendChild(o);} });
+      } else if(state.chartTeamMode===1){
+        titleEl.textContent = "戦略プレー軌跡チャート (表示中: 相手チーム)";
+        btnToggleTeam.textContent = "両チーム重ね合わせ表示に切り替え"; btnToggleTeam.style.background='#10b981';
+        selPlayer.disabled = false;
+        Object.keys(state.oppPlayerMap||{}).forEach(n=>{ if(playedNames.has(n)){ const o=document.createElement('option'); o.value=n; o.textContent=n; selPlayer.appendChild(o);} });
+      } else {
+        titleEl.textContent = "戦略プレー軌跡チャート (表示中: 両チーム重ね合わせ)";
+        btnToggleTeam.textContent = "自チームのチャートに切り替え"; btnToggleTeam.style.background='#3b82f6';
+        selPlayer.value = "全員表示";
+        selPlayer.disabled = true;
+      }
+    };
+
+    btnToggleTeam.onclick = ()=>{ state.chartTeamMode = (state.chartTeamMode+1)%3; updateFilters(); redraw(); };
+    selRally.onchange = redraw; selPlayer.onchange = redraw; selPlayType.onchange = redraw;
+    btnBackStats.onclick = ()=>{ if(isRecordView) App.showRecordStatsPage(); else App.showStatsPage(); };
+    btnBackGame.textContent = isRecordView ? "タイトル画面に戻る" : "元の入力画面に戻る";
+    btnBackGame.onclick = ()=>{ if(isRecordView) App.showTitleScreen(); else App.backToGame(); };
+
+    window.__chartResizeHandlers = window.__chartResizeHandlers || {};
+    window.__chartResizeHandlers[screenId] = redraw;
+
+    assignChartColors(state);
+    updateFilters();
+    redraw();
+  },
+
+  drawCanvas(canvas, state, selPlayer, selPlayType, selRally){
+    const wrap = canvas.parentElement;
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,w,h);
+
+    let cH = Math.floor(h*0.85), cW = cH*2;
+    if(cW > w-60){ cW = w-60; cH = Math.floor(cW/2); }
+    const cx = Math.floor((w-cW)/2), cy = Math.floor((h-cH)/2);
+
+    ctx.fillStyle='rgb(30,45,65)'; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle='rgb(245,158,11)'; ctx.fillRect(cx,cy,cW,cH);
+    ctx.strokeStyle='#fff'; ctx.lineWidth=4; ctx.setLineDash([]);
+    ctx.strokeRect(cx,cy,cW,cH);
+    ctx.beginPath(); ctx.moveTo(cx+cW/2,cy); ctx.lineTo(cx+cW/2,cy+cH); ctx.stroke();
+    ctx.lineWidth=2; ctx.setLineDash([6,6]);
+    ctx.beginPath(); ctx.moveTo(cx+cW/6,cy); ctx.lineTo(cx+cW/6,cy+cH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+cW-cW/6,cy); ctx.lineTo(cx+cW-cW/6,cy+cH); ctx.stroke();
+    ctx.setLineDash([]);
+
+    let targetPlayer = selPlayer.value || "全員表示";
+    let targetPlay = selPlayType.value || "全種類";
+    const rallyVal = selRally.value;
+    const isSingleRallyMode = rallyVal!=null && rallyVal!=="__ALL__" && rallyVal!=="";
+    const targetRally = isSingleRallyMode ? state.globalRallies[parseInt(rallyVal,10)] : null;
+    const targetRallyId = targetRally ? targetRally.id : -1;
+
+    const isSinglePlayerMode = targetPlayer!=="全員表示" && targetPlayer.trim()!=="";
+    const isSinglePlayMode = targetPlay!=="全種類";
+
+    (state.globalArrows||[]).forEach(arrow=>{
+      if(!arrow || !arrow.playerName || !arrow.startP || !arrow.endP) return;
+      if(state.chartTeamMode===0 && arrow.isOpponent) return;
+      if(state.chartTeamMode===1 && !arrow.isOpponent) return;
+      if(isSingleRallyMode && arrow.rallyId!==targetRallyId) return;
+      if(state.chartTeamMode!==2 && isSinglePlayerMode){
+        if(arrow.playerName.trim()!==targetPlayer.trim()) return;
+      }
+      if(isSinglePlayMode && arrow.playType!==targetPlay) return;
+
+      if(state.chartTeamMode===2){
+        ctx.strokeStyle = ctx.fillStyle = arrow.isOpponent ? 'rgb(239,68,68)' : 'rgb(59,130,246)';
+      } else if(isSinglePlayerMode){
+        const isKill = (arrow.playCode && arrow.playCode.indexOf("K")>=0) || arrow.playType.indexOf("得点")>=0;
+        const isError = (arrow.playCode && arrow.playCode.indexOf("E")>=0) || arrow.playType.indexOf("失点")>=0 || arrow.playType.indexOf("ミス")>=0;
+        let c;
+        if(isKill) c='#00ff00'; else if(isError) c='#ff0000';
+        else if(arrow.playType==="スパイク") c='#ffc0cb';
+        else if(arrow.playType==="フェイント") c='#ffff00';
+        else if(arrow.playType==="サーブ") c='#00ffff';
+        else c='#ffffff';
+        ctx.strokeStyle = ctx.fillStyle = c;
+      } else {
+        ctx.strokeStyle = ctx.fillStyle = state.playerColorMap[arrow.playerName] || '#ffffff';
+      }
+
+      let sx = cx + (arrow.startP.x*cW/COURT_BASE_SCALE), sy = cy + (arrow.startP.y*cH/COURT_BASE_SCALE);
+      let ex = cx + (arrow.endP.x*cW/COURT_BASE_SCALE), ey = cy + (arrow.endP.y*cH/COURT_BASE_SCALE);
+      if(sx===ex && sy===ey) ex += 15;
+
+      ctx.lineWidth=3; ctx.lineCap='round'; ctx.lineJoin='round';
+      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.stroke();
+
+      const angle = Math.atan2(ey-sy, ex-sx); const arrowSize=12;
+      ctx.beginPath();
+      ctx.moveTo(ex,ey);
+      ctx.lineTo(ex-arrowSize*Math.cos(angle-Math.PI/6), ey-arrowSize*Math.sin(angle-Math.PI/6));
+      ctx.lineTo(ex-arrowSize*Math.cos(angle+Math.PI/6), ey-arrowSize*Math.sin(angle+Math.PI/6));
+      ctx.closePath(); ctx.fill();
+
+      ctx.font='bold 12px sans-serif';
+      const shortName = arrow.playerName.indexOf(":")>=0 ? arrow.playerName.split(":")[0] : arrow.playerName;
+      if(state.chartTeamMode===2) ctx.fillText("["+shortName+"]", sx-8, sy-8);
+      else if(!isSinglePlayerMode && !isSinglePlayMode) ctx.fillText("["+shortName+":"+arrow.playCode+"]", sx-10, sy-8);
+      else if(isSinglePlayerMode && !isSinglePlayMode) ctx.fillText("["+arrow.playCode+"]", sx-5, sy-8);
+      else if(!isSinglePlayerMode && isSinglePlayMode) ctx.fillText("["+shortName+"]", sx-8, sy-8);
+    });
+
+    (state.globalRallies||[]).forEach(rp=>{
+      if(!rp || !rp.arrows || rp.arrows.length===0) return;
+      if(isSingleRallyMode && rp.id!==targetRallyId) return;
+      const lastArrow = rp.arrows[rp.arrows.length-1];
+      const loc = lastArrow.endP || lastArrow.startP;
+      if(!loc) return;
+      let thisViewScored;
+      if(state.chartTeamMode===0) thisViewScored = rp.selfScored;
+      else if(state.chartTeamMode===1) thisViewScored = !rp.selfScored;
+      else thisViewScored = true;
+
+      ctx.fillStyle = (state.chartTeamMode===2) ? '#ffffff' : (thisViewScored ? 'rgb(239,68,68)' : 'rgb(59,130,246)');
+      const px = cx + (loc.x*cW/COURT_BASE_SCALE), py = cy + (loc.y*cH/COURT_BASE_SCALE);
+      const r=7;
+      ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#000'; ctx.lineWidth=1.5; ctx.stroke();
+    });
+  }
+};
+
+window.addEventListener('resize', ()=>{
+  const h = window.__chartResizeHandlers;
+  if(!h) return;
+  ['screen-chart','screen-record-chart'].forEach(sid=>{
+    const scr = document.getElementById(sid);
+    if(scr && scr.classList.contains('active') && h[sid]) h[sid]();
+  });
+});
+
+/* =========================================================
+   起動
+   ========================================================= */
+App.init();
+</script>
+</body>
+</html>

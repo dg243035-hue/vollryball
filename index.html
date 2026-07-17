@@ -69,7 +69,7 @@ input[type=text]{font-family:inherit;}
 /* ---------- Game screen ---------- */
 #screen-game{background:#000;}
 #game-header-wrapper{display:flex;flex-direction:column;flex-shrink:0;}
-#game-header{display:grid;grid-template-columns:1fr 1fr;height:210px;}
+#game-header{display:grid;grid-template-columns:1fr 1fr;height:160px;}
 .score-section{background:#000;border:1px solid #323232;display:flex;flex-direction:column;overflow:hidden;}
 .score-topinfo{display:flex;align-items:center;gap:8px;padding:4px 8px;flex-wrap:wrap;}
 .score-topinfo.right{justify-content:flex-end;}
@@ -84,17 +84,15 @@ input[type=text]{font-family:inherit;}
 .serve-dot-wrap{position:absolute;bottom:6px;left:0;right:0;display:flex;justify-content:center;}
 .serve-dot{width:22px;height:22px;border-radius:50%;}
 .serve-dot.active{background:#1e90ff;}
-.score-history{display:flex;flex-direction:column;background:#141414;height:44px;justify-content:center;padding:0 8px;}
-.score-history span{color:gray;font-size:11px;}
 #game-logbar{background:#1e1e1e;height:35px;display:flex;align-items:center;flex-shrink:0;}
 #game-logbar .log-text{flex:1;text-align:center;color:orange;font-weight:bold;font-size:14px;}
 #game-logbar .log-btns{display:flex;gap:5px;padding-right:5px;}
 #game-logbar button{font-size:12px;font-weight:bold;color:#fff;padding:4px 8px;border-radius:3px;}
 #court-area{flex:1;position:relative;background:#282828;overflow:hidden;}
 #court-canvas{position:absolute;left:0;top:0;}
-#btn-left-win,#btn-right-lose{position:absolute;font-size:17px;font-weight:bold;color:#fff;border-radius:4px;}
-#btn-left-win{background:#00a000;}
-#btn-right-lose{background:#c81e1e;}
+#btn-left-win,#btn-right-lose{position:absolute;font-size:13px;font-weight:bold;color:#fff;border-radius:4px;line-height:1.3;white-space:normal;}
+#btn-left-win{background:#3366cc;}
+#btn-right-lose{background:#3366cc;}
 #btn-left-win:disabled,#btn-right-lose:disabled{opacity:0.4;cursor:default;}
 #game-footer{background:#141414;height:110px;display:grid;grid-template-columns:0.4fr 0.2fr 0.4fr;flex-shrink:0;}
 .bench-scroll{overflow-x:auto;overflow-y:hidden;background:#191919;display:flex;align-items:center;gap:10px;padding:15px;white-space:nowrap;}
@@ -231,8 +229,8 @@ table.stats-table tr:nth-child(even){background:#16202f;}
   </div>
   <div id="court-area">
     <canvas id="court-canvas"></canvas>
-    <button id="btn-left-win" disabled>得点</button>
-    <button id="btn-right-lose" disabled>失点</button>
+    <button id="btn-left-win">ローテーション変更</button>
+    <button id="btn-right-lose">ローテーション変更</button>
   </div>
   <div id="game-footer">
     <div class="bench-scroll" id="bench-left" style="background:#191919;"></div>
@@ -799,14 +797,8 @@ const GameScreen = {
 
     const leftWinBtn = document.getElementById('btn-left-win');
     const rightLoseBtn = document.getElementById('btn-right-lose');
-    leftWinBtn.onclick = ()=>{
-      finalizeLastPlayEndLocation(App.game.sidesSwapped ? {x:750,y:500} : {x:250,y:500});
-      addScoreToLeftTeam(true);
-    };
-    rightLoseBtn.onclick = ()=>{
-      finalizeLastPlayEndLocation(App.game.sidesSwapped ? {x:250,y:500} : {x:750,y:500});
-      addScoreToRightTeam(false);
-    };
+    leftWinBtn.onclick = ()=> openRotationChangeDialog(!App.game.sidesSwapped);
+    rightLoseBtn.onclick = ()=> openRotationChangeDialog(App.game.sidesSwapped);
 
     this.canvas.addEventListener('click', e=> this.onCourtClick(e));
     window.addEventListener('resize', ()=>{ if(App.game) this.drawCourt(); });
@@ -858,10 +850,7 @@ const GameScreen = {
     serveWrap.appendChild(serveDot);
     centerPanel.append(scoreLbl, minusBtn, plusBtn, serveWrap);
 
-    const history = document.createElement('div'); history.className='score-history';
-    for(let i=0;i<3;i++){ const sp=document.createElement('span'); sp.textContent=' --- 履歴 --- '; history.appendChild(sp); }
-
-    container.append(topInfo, centerPanel, history);
+    container.append(topInfo, centerPanel);
     return { nameLbl, setInd, toInd, toBtn, subLbl, scoreLbl, serveDot };
   },
 
@@ -889,8 +878,8 @@ const GameScreen = {
     const ctx = this.ctx;
     ctx.clearRect(0,0,w,h);
 
-    const courtH = Math.floor(h*0.72), courtW = courtH*2;
-    const cx = Math.floor((w-courtW)/2), cy = Math.floor(h*0.10);
+    const courtH = Math.floor(h*0.82), courtW = courtH*2;
+    const cx = Math.floor((w-courtW)/2), cy = Math.floor(h*0.06);
     this.layout = {cx,cy,courtW,courtH,w,h};
 
     ctx.fillStyle = 'rgb(64,196,255)'; ctx.fillRect(cx-120, cy-40, courtW+240, courtH+80);
@@ -899,8 +888,8 @@ const GameScreen = {
     ctx.strokeRect(cx, cy, courtW, courtH);
     ctx.beginPath(); ctx.moveTo(cx+courtW/2, cy); ctx.lineTo(cx+courtW/2, cy+courtH); ctx.stroke();
     ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(cx+courtW/2-courtW/6, cy); ctx.lineTo(cx+courtW/2-courtW/6, cy+courtH); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx+courtW/2+courtW/6, cy); ctx.lineTo(cx+courtW/2+courtW/6, cy+courtH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+courtW/6, cy); ctx.lineTo(cx+courtW/6, cy+courtH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+courtW-courtW/6, cy); ctx.lineTo(cx+courtW-courtW/6, cy+courtH); ctx.stroke();
 
     const btnW=85, btnH=75, bottomY = cy+courtH+30-btnH;
     const leftWinBtn=document.getElementById('btn-left-win'), rightLoseBtn=document.getElementById('btn-right-lose');
@@ -1096,10 +1085,9 @@ function updateRallyLogText(){
   const g = App.game;
   const logText = document.getElementById('rally-log-text');
   const btnUndo = document.getElementById('btn-undo');
-  const leftWinBtn = document.getElementById('btn-left-win'), rightLoseBtn = document.getElementById('btn-right-lose');
   if(g.rallyHistoryList.length===0){
     logText.textContent = "現在のラリー: 待機中 (【"+(g.serveRightIsLeft? g.selfTeamName : g.oppTeamName)+"】サイドをタップして始動)";
-    leftWinBtn.disabled = true; rightLoseBtn.disabled = true; btnUndo.disabled = true;
+    btnUndo.disabled = true;
   } else {
     let sb = "ラリー履歴: ";
     g.rallyHistoryList.forEach((act,i)=>{
@@ -1108,7 +1096,7 @@ function updateRallyLogText(){
     });
     sb += (g.rallyState===2) ? " ➔ 評価待ち..." : " ➔ 継続中...";
     logText.textContent = sb;
-    leftWinBtn.disabled=false; rightLoseBtn.disabled=false; btnUndo.disabled=false;
+    btnUndo.disabled=false;
   }
 }
 
@@ -1290,6 +1278,27 @@ function rotateTeam(isSelfTeam){
   pos[5]=old[0]; pos[0]=old[1]; pos[1]=old[2]; pos[2]=old[3]; pos[3]=old[4]; pos[4]=old[5];
   checkLiberoFrontRow(isSelfTeam);
   syncPositionsAndCourtArrays(isSelfTeam);
+}
+
+function manualRotateTeam(isSelfTeam, clockwise){
+  const g = App.game;
+  const pos = isSelfTeam ? g.selfPos : g.oppPos;
+  const old = pos.slice();
+  if(clockwise){
+    pos[5]=old[0]; pos[0]=old[1]; pos[1]=old[2]; pos[2]=old[3]; pos[3]=old[4]; pos[4]=old[5];
+  } else {
+    pos[0]=old[5]; pos[1]=old[0]; pos[2]=old[1]; pos[3]=old[2]; pos[4]=old[3]; pos[5]=old[4];
+  }
+  checkLiberoFrontRow(isSelfTeam);
+  syncPositionsAndCourtArrays(isSelfTeam);
+}
+
+function openRotationChangeDialog(isSelfTeam){
+  const g = App.game;
+  const teamName = isSelfTeam ? g.selfTeamName : g.oppTeamName;
+  optionDialog(teamName+" のローテーションを回す方向を選んでください", ["時計回り","反時計回り"], (choice)=>{
+    manualRotateTeam(isSelfTeam, choice===0);
+  });
 }
 
 function checkLiberoFrontRow(isSelfTeam){

@@ -922,7 +922,12 @@ const GameScreen = {
     const ctx = this.ctx;
     ctx.clearRect(0,0,w,h);
 
-    const courtH = Math.floor(h*0.72), courtW = courtH*2;
+    let courtH = Math.floor(h*0.72), courtW = courtH*2;
+    const maxCourtW = w - 280; // 左右の余白(ボタン・ローテーション図用)を必ず確保する
+    if(courtW > maxCourtW){
+      courtW = Math.max(200, maxCourtW);
+      courtH = Math.floor(courtW/2);
+    }
     const cx = Math.floor((w-courtW)/2), cy = Math.floor(h*0.10);
     this.layout = {cx,cy,courtW,courtH,w,h};
 
@@ -1012,7 +1017,7 @@ const GameScreen = {
     const rect = this.canvas.getBoundingClientRect();
     const x = evt.clientX - rect.left, y = evt.clientY - rect.top;
     const L = this.layout;
-    if(x>=L.cx-120 && x<=L.cx+L.courtW+120 && y>=L.cy-40 && y<=L.cy+L.courtH+40){
+    if(x>=L.cx-120 && x<=L.cx+L.courtW+120 && y>=L.cy-70 && y<=L.cy+L.courtH+70){
       g.lastTapIsLeft = (x < L.cx+L.courtW/2) !== g.sidesSwapped;
       const rx = (x-L.cx)/L.courtW, ry = (y-L.cy)/L.courtH;
       const clickedRatioPoint = { x: Math.round(rx*1000), y: Math.round(ry*1000) };

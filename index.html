@@ -69,7 +69,7 @@ input[type=text]{font-family:inherit;}
 /* ---------- Game screen ---------- */
 #screen-game{background:#000;}
 #game-header-wrapper{display:flex;flex-direction:column;flex-shrink:0;}
-#game-header{display:grid;grid-template-columns:1fr 1fr;height:210px;}
+#game-header{display:grid;grid-template-columns:1fr 1fr;height:150px;}
 .score-section{background:#000;border:1px solid #323232;display:flex;flex-direction:column;overflow:hidden;}
 .score-topinfo{display:flex;align-items:center;gap:8px;padding:4px 8px;flex-wrap:wrap;}
 .score-topinfo.right{justify-content:flex-end;}
@@ -92,17 +92,18 @@ input[type=text]{font-family:inherit;}
 #game-logbar button{font-size:12px;font-weight:bold;color:#fff;padding:4px 8px;border-radius:3px;}
 #court-area{flex:1;position:relative;background:#282828;overflow:hidden;}
 #court-canvas{position:absolute;left:0;top:0;}
-#btn-left-win,#btn-right-lose{position:absolute;font-size:17px;font-weight:bold;color:#fff;border-radius:4px;}
-#btn-left-win{background:#00a000;}
-#btn-right-lose{background:#c81e1e;}
+#btn-left-win,#btn-right-lose{position:absolute;font-size:14px;font-weight:bold;color:#fff;border-radius:4px;line-height:1.3;}
+#btn-left-win{background:#4338ca;}
+#btn-right-lose{background:#4338ca;}
 #btn-left-win:disabled,#btn-right-lose:disabled{opacity:0.4;cursor:default;}
-#game-footer{background:#141414;height:110px;display:grid;grid-template-columns:0.4fr 0.2fr 0.4fr;flex-shrink:0;}
-.bench-scroll{overflow-x:auto;overflow-y:hidden;background:#191919;display:flex;align-items:center;gap:10px;padding:15px;white-space:nowrap;}
+#game-footer{background:#141414;height:110px;display:flex;align-items:stretch;flex-shrink:0;}
+.bench-scroll{overflow-x:auto;overflow-y:hidden;background:#191919;display:flex;align-items:center;gap:10px;padding:15px;white-space:nowrap;flex:1;min-width:0;}
 .bench-btn{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:85px;height:60px;color:#fff;font-size:13px;line-height:1.3;flex-shrink:0;border-radius:3px;}
-.footer-menu{display:flex;align-items:center;justify-content:center;gap:8px;}
-.footer-menu button{width:120px;height:55px;font-size:14px;font-weight:bold;color:#fff;border-radius:3px;}
+.footer-menu{display:flex;align-items:center;justify-content:center;gap:8px;flex-shrink:0;padding:0 8px;}
+.footer-menu button{width:110px;height:55px;font-size:14px;font-weight:bold;color:#fff;border-radius:3px;}
 #btn-change-court{background:#3366cc;}
-#btn-open-stats{width:110px !important;background:#8b5cf6;font-size:15px !important;}
+#btn-open-stats{width:100px !important;background:#8b5cf6;font-size:14px !important;}
+#btn-force-end{align-self:center;flex-shrink:0;width:100px;height:55px;font-size:13px;font-weight:bold;color:#fff;background:#7f1d1d;border:2px solid #ef4444;border-radius:3px;margin:0 8px 0 16px;}
 
 /* ---------- Modal dialogs ---------- */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:1000;}
@@ -126,6 +127,9 @@ input[type=text]{font-family:inherit;}
 /* ---------- Stats screen ---------- */
 #screen-stats,#screen-record-stats{padding:20px;gap:15px;background:#0f172a;}
 .stats-title{font-size:22px;font-weight:bold;text-align:center;}
+.stats-filters{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;}
+.stats-filters label{font-weight:bold;font-size:13px;}
+.stats-filters select{font-size:13px;padding:4px 8px;}
 .stats-table-wrap{flex:1;overflow:auto;border:1px solid #334155;}
 table.stats-table{border-collapse:collapse;font-size:13px;white-space:nowrap;}
 table.stats-table th,table.stats-table td{border:1px solid #334155;padding:6px 8px;text-align:center;}
@@ -223,6 +227,7 @@ table.stats-table tr:nth-child(even){background:#16202f;}
     <div id="game-logbar">
       <div class="log-text" id="rally-log-text">現在のラリー: 待機中</div>
       <div class="log-btns">
+        <button id="btn-fix-starters" style="background:#334155;">スタメン修正</button>
         <button id="btn-undo" style="background:#646e78;" disabled>1つ前に戻す</button>
         <button id="btn-reset-rally" style="background:#b42828;">ラリー取消</button>
         <button id="btn-undo-point" style="background:#8c3ca0;">確定ラリー取消</button>
@@ -231,15 +236,16 @@ table.stats-table tr:nth-child(even){background:#16202f;}
   </div>
   <div id="court-area">
     <canvas id="court-canvas"></canvas>
-    <button id="btn-left-win" disabled>得点</button>
-    <button id="btn-right-lose" disabled>失点</button>
+    <button id="btn-left-win">ローテーション<br>変更</button>
+    <button id="btn-right-lose">ローテーション<br>変更</button>
   </div>
   <div id="game-footer">
     <div class="bench-scroll" id="bench-left" style="background:#191919;"></div>
     <div class="footer-menu">
       <button id="btn-change-court">チェンジコート</button>
-      <button id="btn-open-stats">データ集計</button>
+      <button id="btn-open-stats">計測</button>
     </div>
+    <button id="btn-force-end">強制終了</button>
     <div class="bench-scroll" id="bench-right" style="background:#191919;"></div>
   </div>
 </div>
@@ -247,6 +253,7 @@ table.stats-table tr:nth-child(even){background:#16202f;}
 <!-- ============ データ集計画面 (試合中/記録閲覧 共通テンプレート) ============ -->
 <div id="screen-stats" class="screen">
   <div class="stats-title" id="stats-title">リアルタイム個人データ集計表 (自チーム)</div>
+  <div class="stats-filters"><label>表示範囲:</label><select id="stats-select-set"></select></div>
   <div class="stats-table-wrap"><table class="stats-table" id="stats-table"></table></div>
   <div class="stats-bottom">
     <button id="stats-btn-toggle" style="background:#dc2626;">相手チームのデータに切り替え</button>
@@ -256,6 +263,7 @@ table.stats-table tr:nth-child(even){background:#16202f;}
 </div>
 <div id="screen-record-stats" class="screen">
   <div class="stats-title" id="record-stats-title">リアルタイム個人データ集計表 (自チーム)</div>
+  <div class="stats-filters"><label>表示範囲:</label><select id="record-stats-select-set"></select></div>
   <div class="stats-table-wrap"><table class="stats-table" id="record-stats-table"></table></div>
   <div class="stats-bottom">
     <button id="record-stats-btn-toggle" style="background:#dc2626;">相手チームのデータに切り替え</button>
@@ -269,6 +277,7 @@ table.stats-table tr:nth-child(even){background:#16202f;}
   <div class="chart-title" id="chart-title">戦略プレー軌跡チャート (表示中: 自チーム)</div>
   <div class="chart-filters">
     <button id="chart-btn-toggle-team">相手チームのチャートに切り替え</button>
+    <label>セット:</label><select id="chart-select-set"></select>
     <label>ラリー選択:</label><select id="chart-select-rally"></select>
     <label>選手:</label><select id="chart-select-player"></select>
     <label>プレー種類:</label><select id="chart-select-playtype"></select>
@@ -283,6 +292,7 @@ table.stats-table tr:nth-child(even){background:#16202f;}
   <div class="chart-title" id="record-chart-title">戦略プレー軌跡チャート (表示中: 自チーム)</div>
   <div class="chart-filters">
     <button id="record-chart-btn-toggle-team">相手チームのチャートに切り替え</button>
+    <label>セット:</label><select id="record-chart-select-set"></select>
     <label>ラリー選択:</label><select id="record-chart-select-rally"></select>
     <label>選手:</label><select id="record-chart-select-player"></select>
     <label>プレー種類:</label><select id="record-chart-select-playtype"></select>
@@ -379,11 +389,15 @@ const App = {
         selfStatsMap: g.playerStatsMap,
         oppStatsMap: g.opponentStatsMap,
         arrowList: g.arrowList,
-        rallyPackList: g.rallyPackList
+        rallyPackList: g.rallyPackList,
+        statsBySet: g.statsBySet
       };
       this.savedRecords.push(rec);
       saveRecordsToDisk();
     }
+    this.game = null;
+    this.liveStats = null;
+    this.liveChart = null;
     this.showTitleScreen();
   },
   deleteRecord(rec){
@@ -395,6 +409,8 @@ const App = {
   startGame(teamName, s, l, all, oppTeamName, oppS, oppL, oppAll){
     const g = createGamePanel(teamName, s, l, all, oppTeamName, oppS, oppL, oppAll);
     this.game = g;
+    this.liveStats = null;
+    this.liveChart = null;
 
     // 自チーム:登録選手全員をMapに反映
     if(all){
@@ -427,7 +443,7 @@ const App = {
     GameScreen.mount(g);
   },
   showStatsPage(){
-    if(!this.liveStats){ this.liveStats = createStatsState(this.game.playerStatsMap, this.game.opponentStatsMap); }
+    if(!this.liveStats){ this.liveStats = createStatsState(this.game.playerStatsMap, this.game.opponentStatsMap, this.game.statsBySet); }
     StatsScreen.render('screen-stats', this.liveStats, false);
     showScreen('screen-stats');
   },
@@ -440,7 +456,7 @@ const App = {
   backToGame(){ showScreen('screen-game'); },
   showRecordDetail(rec){
     this.currentRecord = rec;
-    this.recordStats = createStatsState(rec.selfStatsMap, rec.oppStatsMap);
+    this.recordStats = createStatsState(rec.selfStatsMap, rec.oppStatsMap, rec.statsBySet);
     this.recordChart = createChartState(rec.selfStatsMap, rec.oppStatsMap, rec.arrowList, rec.rallyPackList);
     StatsScreen.render('screen-record-stats', this.recordStats, true);
     showScreen('screen-record-stats');
@@ -715,14 +731,37 @@ document.getElementById('btn-opp-start').addEventListener('click', ()=> OppSetup
    ========================================================= */
 function newArrowData(rallyId, playerName, playType, playCode, isOpponent, startP, endP){
   return { rallyId, playerName, playType, playCode, isOpponent,
-           startP: {x:startP.x, y:startP.y}, endP: {x:endP.x, y:endP.y} };
+           startP: {x:startP.x, y:startP.y}, endP: {x:endP.x, y:endP.y},
+           setNumber: App.game ? App.game.currentSetNumber : 1 };
 }
 function newActionHistory(playerName, playType, isOpponent, stateBefore, loggedPrevPoint){
   return { playerName, playType, isOpponent, stateBefore,
            loggedPrevPoint: loggedPrevPoint ? {x:loggedPrevPoint.x,y:loggedPrevPoint.y} : null,
            attachedArrow:null, attackPlayerAfter:"", attackTypeAfter:"", attackOpponentAfter:false };
 }
-function newRallyPack(id, scoreLabel){ return { id, scoreLabel, selfScored:false, arrows:[] }; }
+function newRallyPack(id, scoreLabel){
+  return { id, scoreLabel, selfScored:false, arrows:[], setNumber: App.game ? App.game.currentSetNumber : 1 };
+}
+
+/* ---------- セット別スタッツ管理 ---------- */
+function getSetStatObj(isOpponent, name, setNumber){
+  const g = App.game;
+  if(!g.statsBySet[setNumber]) g.statsBySet[setNumber] = { self:{}, opp:{} };
+  const bucket = isOpponent ? g.statsBySet[setNumber].opp : g.statsBySet[setNumber].self;
+  let st = bucket[name];
+  if(!st){ st = newPlayerStats(name, true); bucket[name] = st; }
+  return st;
+}
+function bumpPlayerStat(isOpponent, name, field, delta, setNumber){
+  if(!name) return;
+  const g = App.game;
+  const map = isOpponent ? g.opponentStatsMap : g.playerStatsMap;
+  let st = map[name];
+  if(!st){ st = newPlayerStats(name, true); map[name] = st; }
+  st[field] = Math.max(0, st[field] + delta);
+  const setSt = getSetStatObj(isOpponent, name, setNumber || g.currentSetNumber);
+  setSt[field] = Math.max(0, setSt[field] + delta);
+}
 
 function createGamePanel(teamName, s, l, all, oppTeamName, oppS, oppL, oppAll){
   const g = {
@@ -751,7 +790,8 @@ function createGamePanel(teamName, s, l, all, oppTeamName, oppS, oppL, oppAll){
     previousRatioPoint:null, lastCreatedArrow:null,
     arrowList:[],
     playerStatsMap:{}, opponentStatsMap:{},
-    rallyHistoryList:[], pointHistory:[]
+    rallyHistoryList:[], pointHistory:[],
+    currentSetNumber:1, statsBySet:{}
   };
   // 初期ポジション配列を構築 (s/oppSは {S4,S3,S2,S5,S6,S1} の順)
   if(s && s.length>=6){
@@ -796,17 +836,13 @@ const GameScreen = {
     document.getElementById('btn-undo-point').onclick = ()=> undoLastFinalizedPoint();
     document.getElementById('btn-change-court').onclick = ()=> performCourtChange();
     document.getElementById('btn-open-stats').onclick = ()=> App.showStatsPage();
+    document.getElementById('btn-force-end').onclick = ()=> forceEndGame();
+    document.getElementById('btn-fix-starters').onclick = ()=> fixStartingLineup();
 
     const leftWinBtn = document.getElementById('btn-left-win');
     const rightLoseBtn = document.getElementById('btn-right-lose');
-    leftWinBtn.onclick = ()=>{
-      finalizeLastPlayEndLocation(App.game.sidesSwapped ? {x:750,y:500} : {x:250,y:500});
-      addScoreToLeftTeam(true);
-    };
-    rightLoseBtn.onclick = ()=>{
-      finalizeLastPlayEndLocation(App.game.sidesSwapped ? {x:250,y:500} : {x:750,y:500});
-      addScoreToRightTeam(false);
-    };
+    leftWinBtn.onclick = ()=> openRotationChangeChooser(true);
+    rightLoseBtn.onclick = ()=> openRotationChangeChooser(false);
 
     this.canvas.addEventListener('click', e=> this.onCourtClick(e));
     window.addEventListener('resize', ()=>{ if(App.game) this.drawCourt(); });
@@ -858,10 +894,7 @@ const GameScreen = {
     serveWrap.appendChild(serveDot);
     centerPanel.append(scoreLbl, minusBtn, plusBtn, serveWrap);
 
-    const history = document.createElement('div'); history.className='score-history';
-    for(let i=0;i<3;i++){ const sp=document.createElement('span'); sp.textContent=' --- 履歴 --- '; history.appendChild(sp); }
-
-    container.append(topInfo, centerPanel, history);
+    container.append(topInfo, centerPanel);
     return { nameLbl, setInd, toInd, toBtn, subLbl, scoreLbl, serveDot };
   },
 
@@ -893,16 +926,28 @@ const GameScreen = {
     const cx = Math.floor((w-courtW)/2), cy = Math.floor(h*0.10);
     this.layout = {cx,cy,courtW,courtH,w,h};
 
-    ctx.fillStyle = 'rgb(64,196,255)'; ctx.fillRect(cx-120, cy-40, courtW+240, courtH+80);
+    // 水色の外枠は縦方向だけ広げる（オレンジの実コートはサイズ・配置ともに変更しない）
+    ctx.fillStyle = 'rgb(64,196,255)'; ctx.fillRect(cx-120, cy-70, courtW+240, courtH+140);
     ctx.fillStyle = 'rgb(255,170,90)'; ctx.fillRect(cx, cy, courtW, courtH);
     ctx.strokeStyle = '#fff'; ctx.lineWidth=3;
     ctx.strokeRect(cx, cy, courtW, courtH);
+    // センターライン(ネット)
     ctx.beginPath(); ctx.moveTo(cx+courtW/2, cy); ctx.lineTo(cx+courtW/2, cy+courtH); ctx.stroke();
     ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(cx+courtW/2-courtW/6, cy); ctx.lineTo(cx+courtW/2-courtW/6, cy+courtH); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx+courtW/2+courtW/6, cy); ctx.lineTo(cx+courtW/2+courtW/6, cy+courtH); ctx.stroke();
+    // 左右コートをそれぞれ縦3×横3(9分割)のゾーングリッドにする
+    const colW = courtW/6;
+    for(let i=1;i<3;i++){
+      const xLeft = cx + i*colW;
+      ctx.beginPath(); ctx.moveTo(xLeft, cy); ctx.lineTo(xLeft, cy+courtH); ctx.stroke();
+      const xRight = cx + courtW/2 + i*colW;
+      ctx.beginPath(); ctx.moveTo(xRight, cy); ctx.lineTo(xRight, cy+courtH); ctx.stroke();
+    }
+    for(let j=1;j<3;j++){
+      const yRow = cy + j*(courtH/3);
+      ctx.beginPath(); ctx.moveTo(cx, yRow); ctx.lineTo(cx+courtW, yRow); ctx.stroke();
+    }
 
-    const btnW=85, btnH=75, bottomY = cy+courtH+30-btnH;
+    const btnW=85, btnH=75, bottomY = cy+courtH+50-btnH;
     const leftWinBtn=document.getElementById('btn-left-win'), rightLoseBtn=document.getElementById('btn-right-lose');
     leftWinBtn.style.left = ((cx-120-btnW)/2)+"px"; leftWinBtn.style.top = bottomY+"px";
     leftWinBtn.style.width=btnW+"px"; leftWinBtn.style.height=btnH+"px";
@@ -1011,6 +1056,44 @@ function performCourtChange(){
   updateRallyLogText();
 }
 
+/* ---------- 手動ローテーション変更(得点/失点ボタンを転用) ---------- */
+function openRotationChangeChooser(isLeftSide){
+  const g = App.game; if(!g) return;
+  const isSelfTeam = isLeftSide ? !g.sidesSwapped : g.sidesSwapped;
+  const teamLabel = isSelfTeam ? g.selfTeamName : g.oppTeamName;
+  optionDialog("【"+teamLabel+"】のローテーションを変更", ["時計回りに回転","反時計回りに回転"], (choice)=>{
+    manualRotateTeam(isSelfTeam, choice===0 ? 'cw' : 'ccw');
+  });
+}
+function manualRotateTeam(isSelfTeam, direction){
+  const g = App.game;
+  const pos = isSelfTeam ? g.selfPos : g.oppPos;
+  const old = pos.slice();
+  if(direction==='cw'){
+    pos[5]=old[0]; pos[0]=old[1]; pos[1]=old[2]; pos[2]=old[3]; pos[3]=old[4]; pos[4]=old[5];
+  } else {
+    pos[0]=old[5]; pos[1]=old[0]; pos[2]=old[1]; pos[3]=old[2]; pos[4]=old[3]; pos[5]=old[4];
+  }
+  checkLiberoFrontRow(isSelfTeam);
+  syncPositionsAndCourtArrays(isSelfTeam);
+}
+
+/* ---------- 強制終了 ---------- */
+function forceEndGame(){
+  if(!App.game) return;
+  if(!confirm("試合を強制終了しますか？\nここまでの計測データを保存してタイトル画面に戻ります。")) return;
+  App.finishGameAndReturnToTitle();
+}
+
+/* ---------- スターティングメンバー修正(試合開始直後の入力ミス対応) ---------- */
+function fixStartingLineup(){
+  if(!confirm("スターティングメンバーの登録画面に戻りますか？\n(ここまでの試合の計測データは破棄されます)")) return;
+  App.game = null;
+  App.liveStats = null;
+  App.liveChart = null;
+  App.showSelfSetupScreen();
+}
+
 function refreshHeaderScoreBar(){
   const g = App.game; if(!g) return;
   const leftIsSelf = !g.sidesSwapped;
@@ -1080,26 +1163,26 @@ function undoSingleActionData(action){
   const st = targetMap[action.playerName];
   if(!st) return;
   const type = action.playType;
-  if(type==="サーブ") st.serveAttempts = Math.max(0, st.serveAttempts-1);
+  const bump = (field)=> bumpPlayerStat(action.isOpponent, action.playerName, field, -1, g.currentSetNumber);
+  if(type==="サーブ") bump('serveAttempts');
   else if(type.indexOf("レセプション")===0){
-    st.receptionTotal = Math.max(0, st.receptionTotal-1);
-    if(type.indexOf("[A]")>=0) st.receptionA = Math.max(0, st.receptionA-1);
-    else if(type.indexOf("[B]")>=0) st.receptionB = Math.max(0, st.receptionB-1);
-    else if(type.indexOf("[C]")>=0) st.receptionC = Math.max(0, st.receptionC-1);
-    else if(type.indexOf("[ミス]")>=0) st.receptionError = Math.max(0, st.receptionError-1);
-  } else if(type==="スパイク") st.spikeAttempts = Math.max(0, st.spikeAttempts-1);
-  else if(type==="フェイント") st.feintAttempts = Math.max(0, st.feintAttempts-1);
-  else if(type==="ミス失点") st.otherErrors = Math.max(0, st.otherErrors-1);
+    bump('receptionTotal');
+    if(type.indexOf("[A]")>=0) bump('receptionA');
+    else if(type.indexOf("[B]")>=0) bump('receptionB');
+    else if(type.indexOf("[C]")>=0) bump('receptionC');
+    else if(type.indexOf("[ミス]")>=0) bump('receptionError');
+  } else if(type==="スパイク") bump('spikeAttempts');
+  else if(type==="フェイント") bump('feintAttempts');
+  else if(type==="ミス失点") bump('otherErrors');
 }
 
 function updateRallyLogText(){
   const g = App.game;
   const logText = document.getElementById('rally-log-text');
   const btnUndo = document.getElementById('btn-undo');
-  const leftWinBtn = document.getElementById('btn-left-win'), rightLoseBtn = document.getElementById('btn-right-lose');
   if(g.rallyHistoryList.length===0){
     logText.textContent = "現在のラリー: 待機中 (【"+(g.serveRightIsLeft? g.selfTeamName : g.oppTeamName)+"】サイドをタップして始動)";
-    leftWinBtn.disabled = true; rightLoseBtn.disabled = true; btnUndo.disabled = true;
+    btnUndo.disabled = true;
   } else {
     let sb = "ラリー履歴: ";
     g.rallyHistoryList.forEach((act,i)=>{
@@ -1108,7 +1191,7 @@ function updateRallyLogText(){
     });
     sb += (g.rallyState===2) ? " ➔ 評価待ち..." : " ➔ 継続中...";
     logText.textContent = sb;
-    leftWinBtn.disabled=false; rightLoseBtn.disabled=false; btnUndo.disabled=false;
+    btnUndo.disabled=false;
   }
 }
 
@@ -1159,37 +1242,30 @@ function capturePointHistorySnapshot(isPoint){
     substitutionCountABefore:g.substitutionCountA, substitutionCountBBefore:g.substitutionCountB,
     attackPlayer:g.lastAttackPlayer, attackType:g.lastAttackType, attackIsOpponent:g.isLastAttackOpponent,
     activePlayer:g.lastActivePlayer, activePlayType:g.lastActivePlayType, activeIsOpponent:g.isLastActiveOpponent,
-    isPoint, pack:null
+    isPoint, pack:null, setNumber:g.currentSetNumber
   };
 }
 
-function revertStatsBonus(attackPlayer, attackType, attackIsOpponent, activePlayer, activePlayType, activeIsOpponent, isPoint){
+function revertStatsBonus(attackPlayer, attackType, attackIsOpponent, activePlayer, activePlayType, activeIsOpponent, isPoint, setNumber){
   const g = App.game;
+  const setNum = setNumber || g.currentSetNumber;
   if(attackPlayer){
-    const attackerMap = attackIsOpponent ? g.opponentStatsMap : g.playerStatsMap;
-    const attackSt = attackerMap[attackPlayer];
-    if(attackSt){
-      const isAttackKill = attackIsOpponent ? !isPoint : isPoint;
-      if(isAttackKill){ if(attackType==="フェイント") attackSt.feintKills--; else attackSt.spikeKills--; }
-      else { if(attackType==="フェイント") attackSt.feintErrors--; else attackSt.spikeErrors--; }
-    }
+    const isAttackKill = attackIsOpponent ? !isPoint : isPoint;
+    if(isAttackKill){ bumpPlayerStat(attackIsOpponent, attackPlayer, attackType==="フェイント" ? 'feintKills':'spikeKills', -1, setNum); }
+    else { bumpPlayerStat(attackIsOpponent, attackPlayer, attackType==="フェイント" ? 'feintErrors':'spikeErrors', -1, setNum); }
   }
   const alreadyCountedAsAttacker = activePlayer && activePlayer===attackPlayer && activeIsOpponent===attackIsOpponent
       && (activePlayType==="スパイク" || activePlayType==="フェイント");
   if(activePlayer && !alreadyCountedAsAttacker){
-    const targetMap = activeIsOpponent ? g.opponentStatsMap : g.playerStatsMap;
-    const st = targetMap[activePlayer];
-    if(st){
-      const stBonus = activeIsOpponent ? !isPoint : isPoint;
-      if(stBonus){
-        if(activePlayType==="スパイク") st.spikeKills--;
-        else if(activePlayType==="フェイント") st.feintKills--;
-        else if(activePlayType==="サーブ") st.serveKills--;
-      } else {
-        if(activePlayType==="スパイク") st.spikeErrors--;
-        else if(activePlayType==="フェイント") st.feintErrors--;
-        else if(activePlayType==="サーブ") st.serveErrors--;
-      }
+    const stBonus = activeIsOpponent ? !isPoint : isPoint;
+    if(stBonus){
+      if(activePlayType==="スパイク") bumpPlayerStat(activeIsOpponent, activePlayer, 'spikeKills', -1, setNum);
+      else if(activePlayType==="フェイント") bumpPlayerStat(activeIsOpponent, activePlayer, 'feintKills', -1, setNum);
+      else if(activePlayType==="サーブ") bumpPlayerStat(activeIsOpponent, activePlayer, 'serveKills', -1, setNum);
+    } else {
+      if(activePlayType==="スパイク") bumpPlayerStat(activeIsOpponent, activePlayer, 'spikeErrors', -1, setNum);
+      else if(activePlayType==="フェイント") bumpPlayerStat(activeIsOpponent, activePlayer, 'feintErrors', -1, setNum);
+      else if(activePlayType==="サーブ") bumpPlayerStat(activeIsOpponent, activePlayer, 'serveErrors', -1, setNum);
     }
   }
 }
@@ -1199,7 +1275,7 @@ function undoLastFinalizedPoint(){
   if(g.pointHistory.length===0){ alert("取り消せる確定済みのラリーがありません。"); return; }
   const entry = g.pointHistory.pop();
   revertStatsBonus(entry.attackPlayer, entry.attackType, entry.attackIsOpponent,
-                    entry.activePlayer, entry.activePlayType, entry.activeIsOpponent, entry.isPoint);
+                    entry.activePlayer, entry.activePlayType, entry.activeIsOpponent, entry.isPoint, entry.setNumber);
   g.scoreA = entry.scoreABefore; g.scoreB = entry.scoreBBefore;
   g.serveRightIsLeft = entry.serveRightIsLeftBefore;
   g.selfPos = entry.selfPosBefore; g.oppPos = entry.oppPosBefore;
@@ -1220,31 +1296,23 @@ function undoLastFinalizedPoint(){
 function applyStatsBonus(isPoint){
   const g = App.game;
   if(g.lastAttackPlayer){
-    const attackerMap = g.isLastAttackOpponent ? g.opponentStatsMap : g.playerStatsMap;
-    const attackSt = attackerMap[g.lastAttackPlayer];
-    if(attackSt){
-      const isAttackKill = g.isLastAttackOpponent ? !isPoint : isPoint;
-      if(isAttackKill){ if(g.lastAttackType==="フェイント") attackSt.feintKills++; else attackSt.spikeKills++; }
-      else { if(g.lastAttackType==="フェイント") attackSt.feintErrors++; else attackSt.spikeErrors++; }
-    }
+    const isAttackKill = g.isLastAttackOpponent ? !isPoint : isPoint;
+    if(isAttackKill){ bumpPlayerStat(g.isLastAttackOpponent, g.lastAttackPlayer, g.lastAttackType==="フェイント" ? 'feintKills':'spikeKills', 1, g.currentSetNumber); }
+    else { bumpPlayerStat(g.isLastAttackOpponent, g.lastAttackPlayer, g.lastAttackType==="フェイント" ? 'feintErrors':'spikeErrors', 1, g.currentSetNumber); }
   }
   const alreadyCountedAsAttacker = !!g.lastActivePlayer && g.lastActivePlayer===g.lastAttackPlayer
       && g.isLastActiveOpponent===g.isLastAttackOpponent
       && (g.lastActivePlayType==="スパイク" || g.lastActivePlayType==="フェイント");
   if(g.lastActivePlayer && !alreadyCountedAsAttacker){
-    const targetMap = g.isLastActiveOpponent ? g.opponentStatsMap : g.playerStatsMap;
-    const st = targetMap[g.lastActivePlayer];
-    if(st){
-      const stBonus = g.isLastActiveOpponent ? !isPoint : isPoint;
-      if(stBonus){
-        if(g.lastActivePlayType==="スパイク") st.spikeKills++;
-        else if(g.lastActivePlayType==="フェイント") st.feintKills++;
-        else if(g.lastActivePlayType==="サーブ") st.serveKills++;
-      } else {
-        if(g.lastActivePlayType==="スパイク") st.spikeErrors++;
-        else if(g.lastActivePlayType==="フェイント") st.feintErrors++;
-        else if(g.lastActivePlayType==="サーブ") st.serveErrors++;
-      }
+    const stBonus = g.isLastActiveOpponent ? !isPoint : isPoint;
+    if(stBonus){
+      if(g.lastActivePlayType==="スパイク") bumpPlayerStat(g.isLastActiveOpponent, g.lastActivePlayer, 'spikeKills', 1, g.currentSetNumber);
+      else if(g.lastActivePlayType==="フェイント") bumpPlayerStat(g.isLastActiveOpponent, g.lastActivePlayer, 'feintKills', 1, g.currentSetNumber);
+      else if(g.lastActivePlayType==="サーブ") bumpPlayerStat(g.isLastActiveOpponent, g.lastActivePlayer, 'serveKills', 1, g.currentSetNumber);
+    } else {
+      if(g.lastActivePlayType==="スパイク") bumpPlayerStat(g.isLastActiveOpponent, g.lastActivePlayer, 'spikeErrors', 1, g.currentSetNumber);
+      else if(g.lastActivePlayType==="フェイント") bumpPlayerStat(g.isLastActiveOpponent, g.lastActivePlayer, 'feintErrors', 1, g.currentSetNumber);
+      else if(g.lastActivePlayType==="サーブ") bumpPlayerStat(g.isLastActiveOpponent, g.lastActivePlayer, 'serveErrors', 1, g.currentSetNumber);
     }
   }
 }
@@ -1270,6 +1338,7 @@ function resetScoresForNextSet(){
     App.finishGameAndReturnToTitle();
     return;
   }
+  g.currentSetNumber++;
   g.scoreA=0; g.scoreB=0; g.timeoutsA=0; g.timeoutsB=0; refreshHeaderScoreBar();
   g.substitutionCountA=0; g.substitutionCountB=0;
   g.selfLockedPair={}; g.oppLockedPair={};
@@ -1520,8 +1589,7 @@ function openFastInputDialog(currentPoint){
           act.attackPlayerAfter = g.lastAttackPlayer; act.attackTypeAfter = g.lastAttackType; act.attackOpponentAfter = g.isLastAttackOpponent;
           g.rallyHistoryList.push(act);
           g.lastActivePlayer = g.tempPlayer; g.lastActivePlayType = "サーブ";
-          const map = finalIsOpponent ? g.opponentStatsMap : g.playerStatsMap;
-          if(map[g.tempPlayer]) map[g.tempPlayer].serveAttempts++;
+          bumpPlayerStat(finalIsOpponent, g.tempPlayer, 'serveAttempts', 1, g.currentSetNumber);
           g.previousRatioPoint = currentPoint;
           g.rallyState = 2;
           closeDialog();
@@ -1576,8 +1644,8 @@ function openFastInputDialog(currentPoint){
           g.arrowList.push(arrow); g.currentRallyArrows.push(arrow);
           act.attachedArrow = arrow;
           g.rallyHistoryList.push(act);
-          const st = (finalIsOpponent ? g.opponentStatsMap : g.playerStatsMap)[g.tempPlayer];
-          if(st){ st.receptionTotal++; st.receptionError++; }
+          bumpPlayerStat(finalIsOpponent, g.tempPlayer, 'receptionTotal', 1, g.currentSetNumber);
+          bumpPlayerStat(finalIsOpponent, g.tempPlayer, 'receptionError', 1, g.currentSetNumber);
           closeDialog();
           finalizeLastPlayEndLocation(currentPoint);
           if(grade==="エース"){ if(g.lastTapIsLeft) addScoreToRightTeam(true); else addScoreToLeftTeam(true); }
@@ -1602,11 +1670,10 @@ function openFastInputDialog(currentPoint){
           act.attachedArrow = arrow;
           act.attackPlayerAfter = g.lastAttackPlayer; act.attackTypeAfter = g.lastAttackType; act.attackOpponentAfter = g.isLastAttackOpponent;
           g.rallyHistoryList.push(act);
-          const st = (finalIsOpponent ? g.opponentStatsMap : g.playerStatsMap)[g.tempPlayer];
-          if(st){
-            st.receptionTotal++;
-            if(grade==="A") st.receptionA++; else if(grade==="B") st.receptionB++; else if(grade==="C") st.receptionC++;
-          }
+          bumpPlayerStat(finalIsOpponent, g.tempPlayer, 'receptionTotal', 1, g.currentSetNumber);
+          if(grade==="A") bumpPlayerStat(finalIsOpponent, g.tempPlayer, 'receptionA', 1, g.currentSetNumber);
+          else if(grade==="B") bumpPlayerStat(finalIsOpponent, g.tempPlayer, 'receptionB', 1, g.currentSetNumber);
+          else if(grade==="C") bumpPlayerStat(finalIsOpponent, g.tempPlayer, 'receptionC', 1, g.currentSetNumber);
           g.previousRatioPoint = currentPoint;
           g.rallyState = 3;
           modalRoot.innerHTML = ""; // setVisible(false) 相当：ダイアログを閉じて次のタップ待ち
@@ -1646,12 +1713,8 @@ function openFastInputDialog(currentPoint){
         g.arrowList.push(arrow); g.currentRallyArrows.push(arrow); g.lastCreatedArrow = arrow;
         act.attachedArrow = arrow;
 
-        const targetMap = finalIsOpponent ? g.opponentStatsMap : g.playerStatsMap;
-        const st = targetMap[g.tempPlayer];
-        if(st){
-          if(play==="スパイク"){ st.spikeAttempts++; g.lastAttackPlayer=g.tempPlayer; g.lastAttackType="スパイク"; g.isLastAttackOpponent=finalIsOpponent; }
-          else if(play==="フェイント"){ st.feintAttempts++; g.lastAttackPlayer=g.tempPlayer; g.lastAttackType="フェイント"; g.isLastAttackOpponent=finalIsOpponent; }
-        }
+        if(play==="スパイク"){ bumpPlayerStat(finalIsOpponent, g.tempPlayer, 'spikeAttempts', 1, g.currentSetNumber); g.lastAttackPlayer=g.tempPlayer; g.lastAttackType="スパイク"; g.isLastAttackOpponent=finalIsOpponent; }
+        else if(play==="フェイント"){ bumpPlayerStat(finalIsOpponent, g.tempPlayer, 'feintAttempts', 1, g.currentSetNumber); g.lastAttackPlayer=g.tempPlayer; g.lastAttackType="フェイント"; g.isLastAttackOpponent=finalIsOpponent; }
         act.attackPlayerAfter = g.lastAttackPlayer; act.attackTypeAfter = g.lastAttackType; act.attackOpponentAfter = g.isLastAttackOpponent;
         g.rallyHistoryList.push(act);
         g.previousRatioPoint = currentPoint;
@@ -1669,8 +1732,7 @@ function openFastInputDialog(currentPoint){
     const errBtn = document.createElement('button'); errBtn.className='err-btn'; errBtn.textContent='このプレーのミスで失点確定';
     errBtn.addEventListener('click', ()=>{
       g.rallyHistoryList.push(newActionHistory(g.tempPlayer, "ミス失点", finalIsOpponent, 3, g.previousRatioPoint));
-      const map = finalIsOpponent ? g.opponentStatsMap : g.playerStatsMap;
-      if(map[g.tempPlayer]) map[g.tempPlayer].otherErrors++;
+      bumpPlayerStat(finalIsOpponent, g.tempPlayer, 'otherErrors', 1, g.currentSetNumber);
       closeDialog();
       finalizeLastPlayEndLocation(currentPoint);
       if(g.lastTapIsLeft) addScoreToRightTeam(false); else addScoreToLeftTeam(false);
@@ -1699,8 +1761,8 @@ function openFastInputDialog(currentPoint){
 /* =========================================================
    StatsPanel 相当 ― データ集計表画面
    ========================================================= */
-function createStatsState(selfMap, oppMap){
-  return { selfMap, oppMap, isShowingSelf: true };
+function createStatsState(selfMap, oppMap, statsBySet){
+  return { selfMap, oppMap, statsBySet: statsBySet||{}, isShowingSelf: true, selectedSet: "ALL" };
 }
 
 const STATS_COLUMNS = [
@@ -1722,19 +1784,41 @@ const StatsScreen = {
     const btnToggle = document.getElementById(idp+'btn-toggle');
     const btnChart = document.getElementById(idp+'btn-chart');
     const btnBack = document.getElementById(idp+'btn-back');
+    const selSet = document.getElementById(idp+'select-set');
+
+    const populateSetSelect = ()=>{
+      const maxSet = Math.max(1, ...Object.keys(state.statsBySet||{}).map(n=>parseInt(n,10)).filter(n=>!isNaN(n)));
+      const prevVal = selSet.value || state.selectedSet;
+      selSet.innerHTML = "";
+      const optAll = document.createElement('option'); optAll.value="ALL"; optAll.textContent="全体"; selSet.appendChild(optAll);
+      for(let i=1;i<=maxSet;i++){
+        const o = document.createElement('option'); o.value=String(i); o.textContent=i+"セット目"; selSet.appendChild(o);
+      }
+      if([...selSet.options].some(o=>o.value===prevVal)) selSet.value = prevVal;
+      state.selectedSet = selSet.value;
+    };
 
     const paint = ()=>{
-      titleEl.textContent = "リアルタイム個人データ集計表 ("+(state.isShowingSelf?"自チーム":"相手チーム")+")";
-      this.loadTableData(tableEl, state.isShowingSelf ? state.selfMap : state.oppMap, state.isShowingSelf);
+      titleEl.textContent = "個人データ集計表 ("+(state.isShowingSelf?"自チーム":"相手チーム")+" / "+(state.selectedSet==="ALL"?"全体":state.selectedSet+"セット目")+")";
+      let mapToShow;
+      if(state.selectedSet==="ALL"){
+        mapToShow = state.isShowingSelf ? state.selfMap : state.oppMap;
+      } else {
+        const bucket = state.statsBySet[state.selectedSet];
+        mapToShow = bucket ? (state.isShowingSelf ? bucket.self : bucket.opp) : {};
+      }
+      this.loadTableData(tableEl, mapToShow, state.isShowingSelf);
       btnToggle.textContent = state.isShowingSelf ? "相手チームのデータに切り替え" : "自チームのデータに切り替え";
       btnToggle.style.background = state.isShowingSelf ? '#dc2626' : '#3b82f6';
     };
 
     btnToggle.onclick = ()=>{ state.isShowingSelf = !state.isShowingSelf; paint(); };
+    selSet.onchange = ()=>{ state.selectedSet = selSet.value; paint(); };
     btnChart.onclick = ()=>{ if(isRecordView) App.showRecordChartPage(); else App.showChartPage(); };
     btnBack.textContent = isRecordView ? "タイトル画面に戻る" : "元の入力画面に戻る";
     btnBack.onclick = ()=>{ if(isRecordView) App.showTitleScreen(); else App.backToGame(); };
 
+    populateSetSelect();
     paint();
   },
 
@@ -1847,6 +1931,7 @@ const ChartScreen = {
 
     const titleEl = el('title');
     const btnToggleTeam = el('btn-toggle-team');
+    const selSet = el('select-set');
     const selRally = el('select-rally');
     const selPlayer = el('select-player');
     const selPlayType = el('select-playtype');
@@ -1859,14 +1944,27 @@ const ChartScreen = {
       });
     }
 
-    const redraw = ()=> this.drawCanvas(canvas, state, selPlayer, selPlayType, selRally);
+    const redraw = ()=> this.drawCanvas(canvas, state, selPlayer, selPlayType, selRally, selSet);
+
+    const populateSetSelect = ()=>{
+      const maxSet = Math.max(1, ...(state.globalRallies||[]).map(rp=>rp.setNumber||1));
+      const prevVal = selSet.value || "ALL";
+      selSet.innerHTML = "";
+      const optAll = document.createElement('option'); optAll.value="ALL"; optAll.textContent="全セット"; selSet.appendChild(optAll);
+      for(let i=1;i<=maxSet;i++){
+        const o = document.createElement('option'); o.value=String(i); o.textContent=i+"セット目"; selSet.appendChild(o);
+      }
+      if([...selSet.options].some(o=>o.value===prevVal)) selSet.value = prevVal;
+    };
 
     const updateFilters = ()=>{
       const selectedRallyVal = selRally.value;
+      const setFilter = selSet.value || "ALL";
       selRally.innerHTML = "";
       const optAll = document.createElement('option'); optAll.value="__ALL__"; optAll.textContent="全ラリー重ね合わせ";
       selRally.appendChild(optAll);
       (state.globalRallies||[]).forEach((rp,idx)=>{
+        if(setFilter!=="ALL" && String(rp.setNumber||1)!==setFilter) return;
         const o = document.createElement('option'); o.value = String(idx); o.textContent = rp.scoreLabel; selRally.appendChild(o);
       });
       if([...selRally.options].some(o=>o.value===selectedRallyVal)) selRally.value = selectedRallyVal;
@@ -1894,6 +1992,7 @@ const ChartScreen = {
     };
 
     btnToggleTeam.onclick = ()=>{ state.chartTeamMode = (state.chartTeamMode+1)%3; updateFilters(); redraw(); };
+    selSet.onchange = ()=>{ updateFilters(); redraw(); };
     selRally.onchange = redraw; selPlayer.onchange = redraw; selPlayType.onchange = redraw;
     btnBackStats.onclick = ()=>{ if(isRecordView) App.showRecordStatsPage(); else App.showStatsPage(); };
     btnBackGame.textContent = isRecordView ? "タイトル画面に戻る" : "元の入力画面に戻る";
@@ -1903,11 +2002,12 @@ const ChartScreen = {
     window.__chartResizeHandlers[screenId] = redraw;
 
     assignChartColors(state);
+    populateSetSelect();
     updateFilters();
     redraw();
   },
 
-  drawCanvas(canvas, state, selPlayer, selPlayType, selRally){
+  drawCanvas(canvas, state, selPlayer, selPlayType, selRally, selSet){
     const wrap = canvas.parentElement;
     const w = wrap.clientWidth, h = wrap.clientHeight;
     canvas.width = w; canvas.height = h;
@@ -1930,6 +2030,7 @@ const ChartScreen = {
 
     let targetPlayer = selPlayer.value || "全員表示";
     let targetPlay = selPlayType.value || "全種類";
+    const setFilter = (selSet && selSet.value) || "ALL";
     const rallyVal = selRally.value;
     const isSingleRallyMode = rallyVal!=null && rallyVal!=="__ALL__" && rallyVal!=="";
     const targetRally = isSingleRallyMode ? state.globalRallies[parseInt(rallyVal,10)] : null;
@@ -1942,6 +2043,7 @@ const ChartScreen = {
       if(!arrow || !arrow.playerName || !arrow.startP || !arrow.endP) return;
       if(state.chartTeamMode===0 && arrow.isOpponent) return;
       if(state.chartTeamMode===1 && !arrow.isOpponent) return;
+      if(setFilter!=="ALL" && String(arrow.setNumber||1)!==setFilter) return;
       if(isSingleRallyMode && arrow.rallyId!==targetRallyId) return;
       if(state.chartTeamMode!==2 && isSinglePlayerMode){
         if(arrow.playerName.trim()!==targetPlayer.trim()) return;
@@ -1988,6 +2090,7 @@ const ChartScreen = {
 
     (state.globalRallies||[]).forEach(rp=>{
       if(!rp || !rp.arrows || rp.arrows.length===0) return;
+      if(setFilter!=="ALL" && String(rp.setNumber||1)!==setFilter) return;
       if(isSingleRallyMode && rp.id!==targetRallyId) return;
       const lastArrow = rp.arrows[rp.arrows.length-1];
       const loc = lastArrow.endP || lastArrow.startP;

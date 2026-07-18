@@ -69,7 +69,7 @@ input[type=text]{font-family:inherit;}
 /* ---------- Game screen ---------- */
 #screen-game{background:#000;}
 #game-header-wrapper{display:flex;flex-direction:column;flex-shrink:0;}
-#game-header{display:grid;grid-template-columns:1fr 1fr;height:150px;}
+#game-header{display:grid;grid-template-columns:1fr 1fr;height:210px;}
 .score-section{background:#000;border:1px solid #323232;display:flex;flex-direction:column;overflow:hidden;}
 .score-topinfo{display:flex;align-items:center;gap:8px;padding:4px 8px;flex-wrap:wrap;}
 .score-topinfo.right{justify-content:flex-end;}
@@ -949,9 +949,11 @@ const GameScreen = {
 
     const btnW=85, btnH=75, bottomY = cy+courtH+50-btnH;
     const leftWinBtn=document.getElementById('btn-left-win'), rightLoseBtn=document.getElementById('btn-right-lose');
-    leftWinBtn.style.left = ((cx-120-btnW)/2)+"px"; leftWinBtn.style.top = bottomY+"px";
+    const leftBtnX = Math.max(8, (cx-120-btnW)/2);
+    const rightBtnX = Math.min(w-btnW-8, (cx+courtW+120) + (w-(cx+courtW+120)-btnW)/2);
+    leftWinBtn.style.left = leftBtnX+"px"; leftWinBtn.style.top = bottomY+"px";
     leftWinBtn.style.width=btnW+"px"; leftWinBtn.style.height=btnH+"px";
-    rightLoseBtn.style.left = ((cx+courtW+120) + (w-(cx+courtW+120)-btnW)/2)+"px"; rightLoseBtn.style.top = bottomY+"px";
+    rightLoseBtn.style.left = rightBtnX+"px"; rightLoseBtn.style.top = bottomY+"px";
     rightLoseBtn.style.width=btnW+"px"; rightLoseBtn.style.height=btnH+"px";
 
     const miniCourtW = Math.max(90, cx-144);
